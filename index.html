@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S-P 表分析工具 (標準驗證版)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            max-width: 1100px;
+            margin: 30px auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: fadeIn 0.6s ease-out;
+        }
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            font-size: 2.3rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #444;
+        }
+        textarea {
+            width: calc(100% - 34px);
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-family: Consolas, Monaco, monospace;
+            line-height: 1.5;
+            min-height: 150px;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.95);
+        }
+        textarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
+            outline: none;
+        }
+        .btn-primary {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+        .btn-secondary {
+            display: inline-block;
+            padding: 8px 14px;
+            background: #eef2ff;
+            color: #4f46e5;
+            border: 1px solid #c7d2fe;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+            margin-right: 8px;
+        }
+        .btn-secondary:hover {
+            background: #e0e7ff;
+            transform: translateY(-1px);
+        }
+        .control-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+        .control-bar label {
+            margin-bottom: 0;
+            color: #1e293b;
+            font-size: 1rem;
+        }
+        .version-select {
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            background-color: #fff;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .version-select:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+        }
+        .results {
+            background: rgba(241, 245, 249, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 25px;
+            border-left: 5px solid #667eea;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .results h3 {
+            color: #2c3e50;
+            margin-top: 25px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .results h3:first-child {
+            margin-top: 0;
+        }
+        .results p {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        .results p strong {
+            color: #4f46e5;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .summary-card {
+            background: #fff;
+            padding: 15px 18px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+        .summary-card .card-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .summary-card .card-value {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .summary-card .card-sub {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+        }
+        table, th, td {
+            border: 1px solid rgba(203, 213, 225, 0.7);
+        }
+        th, td {
+            padding: 10px 12px;
+            text-align: center;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        /* S-P 表格的十字定位效果 */
+        #spTable {
+            position: relative;
+            overflow: hidden;
+        }
+        #spTable td.sp-cell-1:hover,
+        #spTable td.sp-cell-0:hover {
+            background-color: rgba(102, 126, 234, 0.35) !important;
+            position: relative;
+        }
+        #spTable td.sp-cell-1:hover::before,
+        #spTable td.sp-cell-0:hover::before {
+            content: '';
+            position: absolute;
+            top: -2000px;
+            bottom: -2000px;
+            left: 0;
+            right: 0;
+            background-color: rgba(102, 126, 234, 0.15);
+            z-index: 0;
+            pointer-events: none;
+        }
+        #spTable td.sp-cell-1:hover::after,
+        #spTable td.sp-cell-0:hover::after {
+            content: '';
+            position: absolute;
+            left: -2000px;
+            right: -2000px;
+            top: 0;
+            bottom: 0;
+            background-color: rgba(102, 126, 234, 0.15);
+            z-index: 0;
+            pointer-events: none;
+        }
+        .warning {
+            color: #dc3545;
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .deviation {
+            background-color: rgba(254, 215, 215, 0.65);
+        }
+        /* S 曲線邊界 (藍色實線) */
+        .sp-boundary-s-right {
+            border-right: 3px solid #2563eb !important;
+        }
+        .sp-boundary-s-left {
+            border-left: 3px solid #2563eb !important;
+        }
+        .sp-boundary-s-bottom {
+            border-bottom: 3px solid #2563eb !important;
+        }
+        /* P 曲線邊界 (綠色實線) */
+        .sp-boundary-p-bottom {
+            border-bottom: 3px solid #16a34a !important;
+        }
+        .sp-boundary-p-top {
+            border-top: 3px solid #16a34a !important;
+        }
+        .sp-boundary-p-right {
+            border-right: 3px solid #16a34a !important;
+        }
+        .sp-cell-1 {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        .sp-cell-0 {
+            color: #ef4444;
+        }
+        .legend-item {
+            margin-bottom: 8px;
+            padding: 6px 8px;
+            border-radius: 5px;
+            line-height: 1.5;
+        }
+        .legend-color-box {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 1px solid #ccc;
+            vertical-align: middle;
+            margin-right: 8px;
+            border-radius: 3px;
+        }
+        .collapsible {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            color: #1e293b;
+            cursor: pointer;
+            padding: 14px 18px;
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            text-align: left;
+            outline: none;
+            font-size: 0.98rem;
+            font-weight: bold;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.25s ease;
+        }
+        .collapsible:hover, .collapsible.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+        .collapsible::after {
+            content: '\002B';
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .collapsible.active::after {
+            content: '\2212';
+        }
+        .collapsible-content {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.35s ease;
+            background: rgba(255, 255, 255, 0.98);
+            border-left: 4px solid #667eea;
+            border-radius: 0 0 10px 10px;
+        }
+        .collapsible-content.active {
+            padding: 18px 20px;
+            max-height: 1200px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+        }
+        .input-section {
+            background: rgba(248, 250, 252, 0.95);
+            padding: 22px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .input-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.2rem;
+        }
+        input[type="file"] {
+            width: calc(100% - 36px);
+            padding: 14px;
+            margin-bottom: 10px;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            background: #fff;
+            cursor: pointer;
+        }
+        .file-preview {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 12px;
+            border: 1px solid #cbd5e1;
+        }
+        .preview-table {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            background: #fff;
+        }
+        .diagnosis-cell {
+            text-align: left !important;
+            font-size: 0.92rem;
+            line-height: 1.45;
+        }
+        .diag-sub {
+            display: block;
+            color: #64748b;
+            font-size: 0.82rem;
+            margin-top: 2px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>S-P 表分析工具</h1>
+
+        <div class="input-section">
+            <h3>方式一：手動輸入二元作答矩陣</h3>
+            <p>每一列代表一位學生，每一欄代表一道試題。請以空白、逗號或 Tab 鍵分隔 <code>0</code>（答錯）或 <code>1</code>（答對）。</p>
+            <div>
+                <button type="button" class="btn-secondary" onclick="loadLiteratureSample()">📥 載入文獻標準驗證範例 (Harnisch & Linn, 18人×5題)</button>
+                <button type="button" class="btn-secondary" onclick="clearInputs()">🗑️ 清空資料</button>
+            </div>
+            <label for="dataInput">輸入作答數據 (僅限完整矩形 0 或 1 矩陣)：</label>
+            <textarea id="dataInput" placeholder="例如：&#10;1 1 1 1 0&#10;1 1 1 0 1&#10;1 1 0 1 0"></textarea>
+        </div>
+
+        <div class="input-section">
+            <h3>方式二：上傳 Excel 檔案</h3>
+            <p>請上傳包含二元作答數據（0 或 1）的 Excel 檔案（<code>.xlsx</code>, <code>.xls</code>）。系統可自動識別並保留第一列題號與第一欄學生編號，但作答資料區域內不得有空白漏答或非 0/1 之數值。</p>
+            <input type="file" id="fileInput" accept=".xlsx,.xls">
+            <div id="filePreview" class="file-preview" style="display:none;">
+                <h4 style="margin-top:0;">檔案預覽：</h4>
+                <div id="previewContent"></div>
+            </div>
+        </div>
+
+        <div class="control-bar">
+            <label for="cautionVersionSelect">⚙️ 選擇注意係數計算公式版本：</label>
+            <select id="cautionVersionSelect" class="version-select" onchange="onVersionChange()">
+                <option value="sato">Sato 原始注意係數 (CS / CP) — 經典共變數比值 (可大於 1)</option>
+                <option value="modified">Harnisch–Linn 修正注意係數 (CS* / CP*) — 值域標準化於 0 ~ 1</option>
+            </select>
+        </div>
+
+        <button class="btn-primary" onclick="performSPAnalysis()">執行 S-P 表分析</button>
+
+        <div id="errorMessages" class="warning" style="display:none;"></div>
+
+        <div id="results" class="results" style="display:none;">
+            <h3>整體結構與 S-P 曲線面積指標</h3>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="card-label">樣本規模 (N × J)</div>
+                    <div class="card-value" id="summaryScale">-</div>
+                    <div class="card-sub" id="summaryTotalCorrect">-</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-label">全體平均答對率 (p̄)</div>
+                    <div class="card-value" id="summaryMeanP">-</div>
+                    <div class="card-sub" id="summaryMeanScores">-</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-label">S-P 曲線差異面積格數 (C)</div>
+                    <div class="card-value" id="curveAreaCells" style="color: #4f46e5;">-</div>
+                    <div class="card-sub" id="curveAreaRatio">-</div>
+                </div>
+                <div class="summary-card">
+                    <div class="card-label">差異係數 (D*) 狀態</div>
+                    <div class="card-value" style="font-size: 1rem; color: #64748b; margin-top: 6px;">未啟用 (待補常數表)</div>
+                    <div class="card-sub">請以面積 C 與各別 CS/CP 進行診斷</div>
+                </div>
+            </div>
+
+            <button type="button" class="collapsible">📊 S-P 曲線差異面積 (C) 與 D* 說明</button>
+            <div class="collapsible-content">
+                <div class="legend-item"><strong>1. S-P 曲線差異面積格數 (C)：</strong>指排序後矩陣中，S 曲線（學生總分累積線）與 P 曲線（試題答對人數累積線）之間所夾的對稱差面積格數：<code>C = Σ_i |r_i - h_i|</code>。</div>
+                <div class="legend-item">• <code>C</code> 恆為非負偶整數。當作答完全符合理想 Guttman 階層組型時，S 曲線與 P 曲線完全重疊，此時 <code>C = 0</code>。</div>
+                <div class="legend-item">• <code>C</code> 越大，代表學生總分分佈與試題難度分佈之間的落差越大（曲線分離程度越高）。</div>
+                <div class="legend-item"><strong>2. 為什麼暫不顯示差異係數 D*？</strong></div>
+                <div class="legend-item">• 文獻中的 <code>D* = C / [4 × N × J × p̄ × (1 - p̄) × D_B(M)]</code> 需依賴佐藤（1975）的二項分佈邊界查表常數 <code>D_B(M)</code>。在未載入經完整核對之原著常數表前，任意以公式代換會導致分母失真，故本工具直接提供精確無誤差之幾何面積格數 <code>C</code> 與面積佔比 <code>C / (N × J)</code>。</div>
+            </div>
+
+            <h3>排序後的 S-P 表 (含 S/P 階梯曲線標示)</h3>
+            <div class="table-wrapper">
+                <table id="spTable">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <button type="button" class="collapsible">🎯 S-P 表格與曲線圖例說明</button>
+            <div class="collapsible-content">
+                <div class="legend-item"><span class="legend-color-box sp-cell-1"></span> <code>1</code>：答對（依學生總分由高至低、試題答對人數由多至少排列）</div>
+                <div class="legend-item"><span class="legend-color-box sp-cell-0"></span> <code>0</code>：答錯</div>
+                <div class="legend-item"><span class="legend-color-box" style="background-color: rgba(254, 215, 215, 0.85);"></span> 粉紅底色：該格作答與 S 曲線理想遮罩（<code>j &lt; r_i</code>）或 P 曲線理想遮罩（<code>i &lt; c_j</code>）不一致</div>
+                <div class="legend-item"><span class="legend-color-box" style="border-right: 3px solid #2563eb; border-bottom: 3px solid #2563eb;"></span> <strong>藍色階梯線（S 曲線）</strong>：每位學生左起第 <code>r_i</code> 題之後的垂直與水平連接邊界</div>
+                <div class="legend-item"><span class="legend-color-box" style="border-bottom: 3px solid #16a34a; border-right: 3px solid #16a34a;"></span> <strong>綠色階梯線（P 曲線）</strong>：每道試題上起第 <code>c_j</code> 位學生之後的水平與垂直連接邊界</div>
+            </div>
+
+            <h3>試題注意係數與品質評估 (<span id="itemTableVersionTitle">Sato 原始 CP</span>)</h3>
+            <p style="font-size: 0.9rem; color: #555;">以下依<strong>S-P 表排序後之試題順序（由易至難）</strong>排列，並保留原始題號方便對照：</p>
+            <div class="table-wrapper">
+                <table id="itemCautionTable">
+                    <thead>
+                        <tr>
+                            <th>S-P 排序</th>
+                            <th>原始題號</th>
+                            <th>答對人數 / 百分比</th>
+                            <th id="itemActiveHeader">Sato 原始 CP</th>
+                            <th id="itemAltHeader">修正係數 CP* (參考)</th>
+                            <th>試題品質評估與可能原因參考</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <button type="button" class="collapsible">⚠️ 試題注意係數 (CP / CP*) 計算與判讀說明</button>
+            <div class="collapsible-content">
+                <div class="legend-item"><strong>1. 兩個公式版本的差異：</strong></div>
+                <div class="legend-item">• <strong>Sato 原始試題注意係數 (CP)：</strong>比較「實際答對學生的總分加權和」與「最高分前 <code>c_j</code> 位學生的總分和」，分母以全體平均總分 <code>r̄</code> 為基準。數值 <code>≥ 0</code>，當高分群答錯而低分群答對的情形顯著時，<strong>數值可能大於 1</strong>。</div>
+                <div class="legend-item">• <strong>Harnisch–Linn 修正注意係數 (CP*)：</strong>分母改為「最高分前 <code>c_j</code> 位學生總分和」減去「最低分後 <code>c_j</code> 位學生總分和」，將值域嚴格標準化於 <strong><code>0 ~ 1</code></strong> 之間（0 為完美契合，1 為完全顛倒）。</div>
+                <div class="legend-item"><strong>2. 判讀門檻慣例與注意事項：</strong></div>
+                <div class="legend-item">• 在佐藤傳統慣例中，原始 <code>CP &lt; 0.5</code> 視為一致性尚可，<code>0.5 ≤ CP &lt; 0.75</code> 建議留意檢視，<code>CP ≥ 0.75</code> 表示偏離明顯。若切換至修正係數 <code>CP*</code>，因其分母較大、數值較小，傳統常以 <code>0.3</code>（約對應原始 0.5）與 <code>0.5</code> 作為參考觀察點。</div>
+                <div class="legend-item">• 當全體學生皆答對、皆答錯，或所有學生總分完全相同時，分母為零，數學上無定義，系統將標示為 <code>無法計算 (null)</code>，不以 0 代替。</div>
+            </div>
+
+            <h3>學生注意係數與學習診斷 (<span id="studentTableVersionTitle">Sato 原始 CS</span>)</h3>
+            <p style="font-size: 0.9rem; color: #555;">以下依<strong>S-P 表排序後之學生順序（總分由高至低）</strong>排列，並保留原始學生編號：</p>
+            <div class="table-wrapper">
+                <table id="studentCautionTable">
+                    <thead>
+                        <tr>
+                            <th>S-P 排序</th>
+                            <th>原始學生編號</th>
+                            <th>得分 / 百分比</th>
+                            <th id="studentActiveHeader">Sato 原始 CS</th>
+                            <th id="studentAltHeader">修正係數 CS* (參考)</th>
+                            <th>作答組型診斷與教學輔導參考</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <button type="button" class="collapsible">⚠️ 學生注意係數 (CS / CS*) 與診斷敘述說明</button>
+            <div class="collapsible-content">
+                <div class="legend-item"><strong>1. 注意係數的本質：</strong>反映該生作答組型偏離「本次樣本試題難易排序」的程度。它不是心理注意力測驗，數值偏高代表該生「答錯較多人會的簡單題，卻答對較少人會的難題」。</div>
+                <div class="legend-item"><strong>2. 雙軌診斷分類參考（結合白話輔導方向與客觀組型描述）：</strong></div>
+                <div class="legend-item">🟢 <strong>得分率 &gt; 75% 且係數正常：</strong>作答組型與整體難易排序一致（表現穩定良好）。</div>
+                <div class="legend-item">🟡 <strong>得分率 &gt; 75% 但係數偏高：</strong>作答組型與難易排序較不一致（高分但錯簡單題，<strong>可能</strong>偶有粗心失誤、題意誤讀或特定基礎概念遺漏，建議檢視錯題歷程）。</div>
+                <div class="legend-item">🔵 <strong>得分率 50%–75% 且係數正常：</strong>作答組型穩定（基礎題大致掌握，可循序加強進階題型）。</div>
+                <div class="legend-item">🟠 <strong>得分率 50%–75% 但係數偏高：</strong>作答組型偏離預期（<strong>可能</strong>準備尚欠全面、部分概念混淆或偶有粗心與猜測，建議個別釐清迷思概念）。</div>
+                <div class="legend-item">🟣 <strong>得分率 &lt; 50% 且係數正常：</strong>作答組型符合難易階層，惟整體得分偏低（基礎學力可能尚待充實，建議由淺入深進行補救教學）。</div>
+                <div class="legend-item">🔴 <strong>得分率 &lt; 50% 且係數偏高：</strong>作答組型極不一致且得分偏低（<strong>可能</strong>學習基礎較不穩定、受試題多向度影響或有隨機猜測傾向，建議深入了解解題歷程與學習困難）。</div>
+                <div class="legend-item">⚪ <strong>無法計算（滿分、零分或分母為零）：</strong>全對或全錯之作答向量缺乏組型變異（分母為 0），依統計規範不計算注意係數，僅依總分呈現表現。</div>
+            </div>
+
+            <h3>古典測驗理論：試題難度 (P) 與鑑別度 (D) 分析 (依原始題號排列)</h3>
+            <div class="table-wrapper">
+                <table id="itemAnalysisTable">
+                    <thead>
+                        <tr>
+                            <th>原始題號</th>
+                            <th>答對人數</th>
+                            <th>難度 (P值)</th>
+                            <th>鑑別度 (D值)</th>
+                            <th>難度解釋</th>
+                            <th>鑑別度解釋</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        let currentExcelPayload = null;
+        let lastCoreResult = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const collapsibles = document.querySelectorAll('.collapsible');
+            collapsibles.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const content = this.nextElementSibling;
+                    content.classList.toggle('active');
+                });
+            });
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+        });
+
+        function loadLiteratureSample() {
+            const sample = [
+                "1 1 1 1 0",
+                "1 1 1 0 1",
+                "1 1 1 0 0",
+                "1 1 0 1 0",
+                "1 1 0 0 1",
+                "1 0 1 0 1",
+                "1 1 0 0 0",
+                "1 1 0 0 0",
+                "1 0 1 0 0",
+                "1 0 0 1 0",
+                "0 1 1 0 0",
+                "0 1 0 1 0",
+                "1 0 0 0 0",
+                "1 0 0 0 0",
+                "0 1 0 0 0",
+                "0 0 1 0 0",
+                "0 0 0 1 0",
+                "0 0 0 1 0"
+            ].join("\n");
+            document.getElementById('dataInput').value = sample;
+            currentExcelPayload = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            performSPAnalysis();
+        }
+
+        function clearInputs() {
+            document.getElementById('dataInput').value = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('errorMessages').style.display = 'none';
+            currentExcelPayload = null;
+            lastCoreResult = null;
+        }
+
+        function onVersionChange() {
+            if (lastCoreResult) {
+                renderAllResults(lastCoreResult);
+            }
+        }
+
+        function isBinaryCell(val) {
+            if (val === 0 || val === 1) return true;
+            if (typeof val === 'string') {
+                const t = val.trim();
+                return t === '0' || t === '1';
+            }
+            return false;
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
+
+                    const parsed = processExcelDataStrict(jsonData);
+                    currentExcelPayload = parsed;
+                    displayFilePreview(parsed, firstSheetName);
+                    document.getElementById('dataInput').value = '';
+                    document.getElementById('errorMessages').style.display = 'none';
+                } catch (error) {
+                    currentExcelPayload = null;
+                    document.getElementById('filePreview').style.display = 'none';
+                    const errDiv = document.getElementById('errorMessages');
+                    errDiv.textContent = `Excel 匯入錯誤：${error.message}`;
+                    errDiv.style.display = 'block';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 嚴格解析 Excel，同時保留自訂學生編號與題號
+        function processExcelDataStrict(rawData) {
+            const nonEmptyRows = rawData.filter(row =>
+                Array.isArray(row) && row.some(cell => cell !== null && cell !== undefined && String(cell).trim() !== '')
+            );
+            if (nonEmptyRows.length === 0) {
+                throw new Error("Excel 工作表是空的。");
+            }
+
+            // 判斷第一列是否為標題列
+            let startRow = 0;
+            const firstRowNonEmpty = nonEmptyRows[0].filter(c => c !== null && c !== undefined && String(c).trim() !== '');
+            if (firstRowNonEmpty.some(c => !isBinaryCell(c))) {
+                startRow = 1;
+            }
+            const dataRowsRaw = nonEmptyRows.slice(startRow);
+            if (dataRowsRaw.length === 0) {
+                throw new Error("未找到包含 0 與 1 的作答資料列。");
+            }
+
+            // 判斷第一欄是否為學生編號/姓名欄（若有任何一列的第一欄不是 0/1，或第一列左上角有標題文字且總欄數 > 1）
+            let startCol = 0;
+            if (dataRowsRaw.some(r => !isBinaryCell(r[0]))) {
+                startCol = 1;
+            }
+
+            let J = dataRowsRaw[0].length - startCol;
+            while (J > 0 && (dataRowsRaw[0][startCol + J - 1] === null || String(dataRowsRaw[0][startCol + J - 1]).trim() === '')) {
+                J--;
+            }
+            if (J <= 0) {
+                throw new Error("無法識別試題欄位，請確認內容為 0 或 1。");
+            }
+
+            // 擷取題號陣列
+            let itemIds = null;
+            if (startRow === 1) {
+                itemIds = [];
+                const seenItemIds = new Set();
+                for (let j = 0; j < J; j++) {
+                    let rawId = nonEmptyRows[0][startCol + j];
+                    let idStr = (rawId !== null && rawId !== undefined && String(rawId).trim() !== '')
+                        ? String(rawId).trim()
+                        : `Q${j + 1}`;
+                    if (seenItemIds.has(idStr)) idStr = `${idStr}_${j + 1}`;
+                    seenItemIds.add(idStr);
+                    itemIds.push(idStr);
+                }
+            }
+
+            const matrix = [];
+            const studentIds = [];
+            const seenStudentIds = new Set();
+
+            for (let i = 0; i < dataRowsRaw.length; i++) {
+                const rawRow = dataRowsRaw[i];
+                if (startCol === 1) {
+                    let rawSid = rawRow[0];
+                    let sidStr = (rawSid !== null && rawSid !== undefined && String(rawSid).trim() !== '')
+                        ? String(rawSid).trim()
+                        : `S${i + 1}`;
+                    if (seenStudentIds.has(sidStr)) sidStr = `${sidStr}_${i + 1}`;
+                    seenStudentIds.add(sidStr);
+                    studentIds.push(sidStr);
+                } else {
+                    studentIds.push(`S${i + 1}`);
+                }
+
+                const rowVec = [];
+                for (let j = 0; j < J; j++) {
+                    const cell = rawRow[startCol + j];
+                    if (cell === null || cell === undefined || String(cell).trim() === '') {
+                        throw new Error(`第 ${i + 1 + startRow} 列、第 ${j + 1} 題發現空白儲存格！本工具不自動將漏答轉為 0，請先確認計分並補齊資料。`);
+                    }
+                    const trimmed = String(cell).trim();
+                    if (trimmed !== '0' && trimmed !== '1') {
+                        throw new Error(`第 ${i + 1 + startRow} 列、第 ${j + 1} 題出現非法數值「${trimmed}」（僅接受 0 或 1）。`);
+                    }
+                    rowVec.push(Number(trimmed));
+                }
+                matrix.push(rowVec);
+            }
+
+            return { matrix, studentIds, itemIds };
+        }
+
+        function displayFilePreview(payload, sheetName) {
+            const { matrix, studentIds, itemIds } = payload;
+            const previewDiv = document.getElementById('filePreview');
+            const previewContent = document.getElementById('previewContent');
+            let html = `<p><strong>工作表：</strong>${sheetName} ｜ <strong>資料維度：</strong>${matrix.length} 位學生 × ${matrix[0]?.length || 0} 道試題</p>`;
+            const previewRows = Math.min(8, matrix.length);
+            const previewCols = Math.min(10, matrix[0]?.length || 0);
+
+            html += '<div class="preview-table"><table><thead><tr><th>學生</th>';
+            for (let j = 0; j < previewCols; j++) {
+                const qLabel = itemIds ? itemIds[j] : `Q${j + 1}`;
+                html += `<th>${qLabel}</th>`;
+            }
+            if (matrix[0]?.length > previewCols) html += '<th>...</th>';
+            html += '</tr></thead><tbody>';
+
+            for (let i = 0; i < previewRows; i++) {
+                const sLabel = studentIds ? studentIds[i] : `S${i + 1}`;
+                html += `<tr><td>${sLabel}</td>`;
+                for (let j = 0; j < previewCols; j++) {
+                    const v = matrix[i][j];
+                    html += `<td class="${v === 1 ? 'sp-cell-1' : 'sp-cell-0'}">${v}</td>`;
+                }
+                if (matrix[0]?.length > previewCols) html += '<td>...</td>';
+                html += '</tr>';
+            }
+            if (matrix.length > previewRows) html += '<tr><td colspan="100%">...</td></tr>';
+            html += '</tbody></table></div>';
+            previewContent.innerHTML = html;
+            previewDiv.style.display = 'block';
+        }
+
+        function parseInputStrict(input) {
+            const lines = input.trim().split('\n').map(l => l.trim()).filter(l => l !== '');
+            if (lines.length === 0) {
+                throw new Error("請輸入有效的作答數據。");
+            }
+            const matrix = [];
+            let J = 0;
+
+            for (let i = 0; i < lines.length; i++) {
+                const tokens = lines[i].split(/[\s,]+/).filter(t => t !== '');
+                if (J === 0) {
+                    J = tokens.length;
+                } else if (tokens.length !== J) {
+                    throw new Error(`第 ${i + 1} 列的作答題數（${tokens.length} 題）與第 1 列（${J} 題）不一致，請提供完整矩形矩陣。`);
+                }
+                const row = tokens.map((tok, j) => {
+                    if (tok !== '0' && tok !== '1') {
+                        throw new Error(`第 ${i + 1} 列、第 ${j + 1} 欄的值「${tok}」無效，僅接受 0 或 1。`);
+                    }
+                    return Number(tok);
+                });
+                matrix.push(row);
+            }
+            return matrix;
+        }
+
+        /**
+         * S-P 表核心計算函式 (符合 SP_Table_AI_Development_Reference v1.0 規格)
+         */
+        function computeSPCore(matrix, studentIds = null, itemIds = null) {
+            const N = matrix.length;
+            const J = matrix[0].length;
+            const sIds = studentIds || Array.from({ length: N }, (_, i) => `S${i + 1}`);
+            const pIds = itemIds || Array.from({ length: J }, (_, j) => `Q${j + 1}`);
+
+            const rowTotals = matrix.map(row => row.reduce((sum, v) => sum + v, 0));
+            const columnTotals = Array(J).fill(0);
+            for (let i = 0; i < N; i++) {
+                for (let j = 0; j < J; j++) {
+                    columnTotals[j] += matrix[i][j];
+                }
+            }
+            const totalCorrect = rowTotals.reduce((sum, v) => sum + v, 0);
+
+            const studentOrder = Array.from({ length: N }, (_, i) => i)
+                .sort((a, b) => (rowTotals[b] - rowTotals[a]) || (a - b));
+            const itemOrder = Array.from({ length: J }, (_, j) => j)
+                .sort((a, b) => (columnTotals[b] - columnTotals[a]) || (a - b));
+
+            const sortedMatrix = studentOrder.map(rIdx => itemOrder.map(cIdx => matrix[rIdx][cIdx]));
+            const sortedRowTotals = studentOrder.map(rIdx => rowTotals[rIdx]);
+            const sortedColTotals = itemOrder.map(cIdx => columnTotals[cIdx]);
+
+            function calcCautionPair(v, w, sumW) {
+                const L = v.length;
+                const k = v.reduce((s, val) => s + val, 0);
+
+                if (k === 0 || k === L) {
+                    return {
+                        cautionSato: null,
+                        cautionModified: null,
+                        statusSato: "extreme_score",
+                        statusModified: "extreme_score"
+                    };
+                }
+
+                let observed = 0;
+                for (let t = 0; t < L; t++) observed += v[t] * w[t];
+
+                let best = 0;
+                for (let t = 0; t < k; t++) best += w[t];
+
+                let worst = 0;
+                for (let t = L - k; t < L; t++) worst += w[t];
+
+                const num = best - observed;
+                const denSatoScaled = L * best - k * sumW;
+                const denModified = best - worst;
+
+                const satoResult = (denSatoScaled === 0)
+                    ? { val: null, status: "zero_denominator" }
+                    : { val: (L * num) / denSatoScaled, status: "ok" };
+
+                const modResult = (denModified === 0)
+                    ? { val: null, status: "zero_denominator" }
+                    : { val: num / denModified, status: "ok" };
+
+                return {
+                    cautionSato: satoResult.val,
+                    cautionModified: modResult.val,
+                    statusSato: satoResult.status,
+                    statusModified: modResult.status
+                };
+            }
+
+            const studentsResult = Array(N);
+            for (let sortedI = 0; sortedI < N; sortedI++) {
+                const origI = studentOrder[sortedI];
+                const v = sortedMatrix[sortedI];
+                const cRes = calcCautionPair(v, sortedColTotals, totalCorrect);
+                studentsResult[origI] = {
+                    id: sIds[origI],
+                    originalIndex: origI,
+                    sortedIndex: sortedI,
+                    score: rowTotals[origI],
+                    rate: rowTotals[origI] / J,
+                    ...cRes
+                };
+            }
+
+            const itemsResult = Array(J);
+            for (let sortedJ = 0; sortedJ < J; sortedJ++) {
+                const origJ = itemOrder[sortedJ];
+                const v = Array.from({ length: N }, (_, sortedI) => sortedMatrix[sortedI][sortedJ]);
+                const cRes = calcCautionPair(v, sortedRowTotals, totalCorrect);
+                itemsResult[origJ] = {
+                    id: pIds[origJ],
+                    originalIndex: origJ,
+                    sortedIndex: sortedJ,
+                    correctCount: columnTotals[origJ],
+                    rate: columnTotals[origJ] / N,
+                    ...cRes
+                };
+            }
+
+            let curveAreaCells = 0;
+            for (let i = 0; i < N; i++) {
+                const r_i = sortedRowTotals[i];
+                for (let j = 0; j < J; j++) {
+                    const c_j = sortedColTotals[j];
+                    const sMask = (j < r_i) ? 1 : 0;
+                    const pMask = (i < c_j) ? 1 : 0;
+                    curveAreaCells += Math.abs(sMask - pMask);
+                }
+            }
+
+            const itemAnalysis = calculateCTTItemAnalysis(matrix, rowTotals, pIds);
+
+            return {
+                N,
+                J,
+                totalCorrect,
+                meanP: totalCorrect / (N * J),
+                meanR: totalCorrect / N,
+                meanC: totalCorrect / J,
+                rowTotals,
+                columnTotals,
+                studentOrder,
+                itemOrder,
+                sortedMatrix,
+                sortedRowTotals,
+                sortedColTotals,
+                students: studentsResult,
+                items: itemsResult,
+                sortedStudents: studentOrder.map(idx => studentsResult[idx]),
+                sortedItems: itemOrder.map(idx => itemsResult[idx]),
+                curveAreaCells,
+                curveAreaRatio: curveAreaCells / (N * J),
+                Dstar: null,
+                DstarStatus: "reference_table_unverified",
+                itemAnalysis
+            };
+        }
+
+        function calculateCTTItemAnalysis(rawData, studentScores, pIds) {
+            const N = rawData.length;
+            const J = rawData[0].length;
+            const sortedStudents = studentScores
+                .map((score, index) => ({ index, score }))
+                .sort((a, b) => (b.score - a.score) || (a.index - b.index));
+
+            const groupSize = Math.max(1, Math.floor(N * 0.27));
+            const highGroup = sortedStudents.slice(0, groupSize);
+            const lowGroup = sortedStudents.slice(-groupSize);
+
+            const results = [];
+            for (let j = 0; j < J; j++) {
+                let correctCount = 0;
+                for (let i = 0; i < N; i++) correctCount += rawData[i][j];
+                const difficulty = correctCount / N;
+
+                const highRate = highGroup.reduce((s, st) => s + rawData[st.index][j], 0) / groupSize;
+                const lowRate = lowGroup.reduce((s, st) => s + rawData[st.index][j], 0) / groupSize;
+                const discrimination = highRate - lowRate;
+
+                let difficultyLabel = "中等";
+                if (difficulty >= 0.8) difficultyLabel = "很容易";
+                else if (difficulty >= 0.6) difficultyLabel = "容易";
+                else if (difficulty >= 0.4) difficultyLabel = "中等";
+                else if (difficulty >= 0.2) difficultyLabel = "困難";
+                else difficultyLabel = "很困難";
+
+                let discriminationLabel = "很好";
+                if (discrimination >= 0.4) discriminationLabel = "很好";
+                else if (discrimination >= 0.3) discriminationLabel = "好";
+                else if (discrimination >= 0.2) discriminationLabel = "可接受";
+                else if (discrimination >= 0.1) discriminationLabel = "需改進";
+                else discriminationLabel = "很差";
+
+                results.push({
+                    id: pIds[j],
+                    correctCount,
+                    difficulty: difficulty.toFixed(3),
+                    discrimination: discrimination.toFixed(3),
+                    difficultyLabel,
+                    discriminationLabel
+                });
+            }
+            return results;
+        }
+
+        function formatCautionStatus(status) {
+            if (status === "extreme_score") return "無法計算 (滿分或零分)";
+            if (status === "zero_denominator") return "無法計算 (分母為零)";
+            return "無法計算";
+        }
+
+        function performSPAnalysis() {
+            const dataInput = document.getElementById('dataInput').value;
+            const resultsDiv = document.getElementById('results');
+            const errorMessagesDiv = document.getElementById('errorMessages');
+            errorMessagesDiv.style.display = 'none';
+
+            try {
+                if (dataInput.trim() !== '') {
+                    const rawData = parseInputStrict(dataInput);
+                    lastCoreResult = computeSPCore(rawData);
+                } else if (currentExcelPayload && currentExcelPayload.matrix.length > 0) {
+                    lastCoreResult = computeSPCore(
+                        currentExcelPayload.matrix,
+                        currentExcelPayload.studentIds,
+                        currentExcelPayload.itemIds
+                    );
+                } else {
+                    throw new Error("請先輸入作答數據或上傳 Excel 檔案。");
+                }
+
+                renderAllResults(lastCoreResult);
+                resultsDiv.style.display = 'block';
+            } catch (error) {
+                resultsDiv.style.display = 'none';
+                errorMessagesDiv.textContent = `錯誤：${error.message}`;
+                errorMessagesDiv.style.display = 'block';
+            }
+        }
+
+        function renderAllResults(res) {
+            const version = document.getElementById('cautionVersionSelect').value;
+            const isSato = (version === 'sato');
+
+            const warnThreshold = isSato ? 0.5 : 0.3;
+            const severeThreshold = isSato ? 0.75 : 0.5;
+
+            document.getElementById('summaryScale').textContent = `${res.N} 人 × ${res.J} 題`;
+            document.getElementById('summaryTotalCorrect').textContent = `總格數 ${res.N * res.J} 格 ｜ 總答對 T = ${res.totalCorrect} 次`;
+            document.getElementById('summaryMeanP').textContent = `${(res.meanP * 100).toFixed(1)}% (${res.meanP.toFixed(3)})`;
+            document.getElementById('summaryMeanScores').textContent = `平均總分 r̄ = ${res.meanR.toFixed(2)} ｜ 題平均答對 c̄ = ${res.meanC.toFixed(2)}`;
+            document.getElementById('curveAreaCells').textContent = `${res.curveAreaCells} 格`;
+            document.getElementById('curveAreaRatio').textContent = `佔總格數 ${(res.curveAreaRatio * 100).toFixed(1)}% (偶整數對稱差面積)`;
+
+            document.getElementById('itemTableVersionTitle').textContent = isSato
+                ? "當前主指標：Sato 原始試題注意係數 (CP)"
+                : "當前主指標：Harnisch–Linn 修正試題注意係數 (CP*)";
+            document.getElementById('itemActiveHeader').textContent = isSato ? "Sato 原始 CP (主判讀)" : "修正係數 CP* (主判讀)";
+            document.getElementById('itemAltHeader').textContent = isSato ? "修正係數 CP* (對照)" : "Sato 原始 CP (對照)";
+
+            document.getElementById('studentTableVersionTitle').textContent = isSato
+                ? "當前主指標：Sato 原始學生注意係數 (CS)"
+                : "當前主指標：Harnisch–Linn 修正學生注意係數 (CS*)";
+            document.getElementById('studentActiveHeader').textContent = isSato ? "Sato 原始 CS (主判讀)" : "修正係數 CS* (主判讀)";
+            document.getElementById('studentAltHeader').textContent = isSato ? "修正係數 CS* (對照)" : "Sato 原始 CS (對照)";
+
+            const spTableHeader = document.querySelector('#spTable thead');
+            const spTableBody = document.querySelector('#spTable tbody');
+            spTableHeader.innerHTML = '';
+            spTableBody.innerHTML = '';
+
+            const headerRow = spTableHeader.insertRow();
+            headerRow.insertCell().textContent = '學生 \\ 題目';
+            res.sortedItems.forEach(item => {
+                headerRow.insertCell().textContent = item.id;
+            });
+            headerRow.insertCell().textContent = '學生總分 (r_i)';
+
+            res.sortedMatrix.forEach((studentRow, i) => {
+                const row = spTableBody.insertRow();
+                const stObj = res.sortedStudents[i];
+                row.insertCell().textContent = stObj.id;
+
+                const r_i = res.sortedRowTotals[i];
+
+                studentRow.forEach((answer, j) => {
+                    const cell = row.insertCell();
+                    cell.textContent = answer;
+                    cell.classList.add(answer === 1 ? 'sp-cell-1' : 'sp-cell-0');
+
+                    const c_j = res.sortedColTotals[j];
+
+                    // S 曲線垂直邊界 (含 r_i=0 畫在第一題左邊界)
+                    if (r_i === 0 && j === 0) {
+                        cell.classList.add('sp-boundary-s-left');
+                    } else if (r_i > 0 && j === r_i - 1) {
+                        cell.classList.add('sp-boundary-s-right');
+                    }
+
+                    // S 曲線水平轉折線
+                    if (i < res.N - 1) {
+                        const next_r = res.sortedRowTotals[i + 1];
+                        if (j >= next_r && j < r_i) {
+                            cell.classList.add('sp-boundary-s-bottom');
+                        }
+                    }
+
+                    // P 曲線水平邊界 (含 c_j=0 畫在第一列上邊界)
+                    if (c_j === 0 && i === 0) {
+                        cell.classList.add('sp-boundary-p-top');
+                    } else if (c_j > 0 && i === c_j - 1) {
+                        cell.classList.add('sp-boundary-p-bottom');
+                    }
+
+                    // P 曲線垂直轉折線
+                    if (j < res.J - 1) {
+                        const next_c = res.sortedColTotals[j + 1];
+                        if (i >= next_c && i < c_j) {
+                            cell.classList.add('sp-boundary-p-right');
+                        }
+                    }
+
+                    const idealS = (j < r_i) ? 1 : 0;
+                    const idealP = (i < c_j) ? 1 : 0;
+                    if (answer !== idealS || answer !== idealP) {
+                        cell.classList.add('deviation');
+                    }
+                });
+
+                const totalCell = row.insertCell();
+                totalCell.textContent = r_i;
+                totalCell.style.fontWeight = 'bold';
+            });
+
+            const footerRow = spTableBody.insertRow();
+            const footerLabel = footerRow.insertCell();
+            footerLabel.textContent = '答對人數 (c_j)';
+            footerLabel.style.fontWeight = 'bold';
+            res.sortedColTotals.forEach(c_j => {
+                const cCell = footerRow.insertCell();
+                cCell.textContent = c_j;
+                cCell.style.fontWeight = 'bold';
+            });
+            const grandTotalCell = footerRow.insertCell();
+            grandTotalCell.textContent = `T=${res.totalCorrect}`;
+            grandTotalCell.style.fontWeight = 'bold';
+
+            // 渲染試題注意係數表
+            const itemCautionBody = document.querySelector('#itemCautionTable tbody');
+            itemCautionBody.innerHTML = '';
+            res.sortedItems.forEach((item, rankIdx) => {
+                const row = itemCautionBody.insertRow();
+                row.insertCell().textContent = `#${rankIdx + 1}`;
+                row.insertCell().textContent = item.id;
+
+                const pct = (item.rate * 100).toFixed(1);
+                row.insertCell().textContent = `${item.correctCount} / ${res.N} (${pct}%)`;
+
+                const activeVal = isSato ? item.cautionSato : item.cautionModified;
+                const activeStatus = isSato ? item.statusSato : item.statusModified;
+                const altVal = isSato ? item.cautionModified : item.cautionSato;
+
+                const activeCell = row.insertCell();
+                const altCell = row.insertCell();
+                altCell.style.color = '#64748b';
+                altCell.textContent = (altVal === null) ? "null" : altVal.toFixed(3);
+
+                const diagCell = row.insertCell();
+                diagCell.className = 'diagnosis-cell';
+
+                if (activeVal === null) {
+                    activeCell.textContent = formatCautionStatus(activeStatus);
+                    activeCell.style.backgroundColor = "#e2e8f0";
+                    activeCell.style.color = "#475569";
+                    diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${activeStatus === 'extreme_score' ? '全體答對或全體答錯' : '學生總分無變異，分母為零'}）</strong><span class="diag-sub">此題無組型變異可供比較，請依整體教學目標評估是否保留作為基本題或挑戰題。</span>`;
+                } else {
+                    activeCell.textContent = activeVal.toFixed(3);
+                    if (activeVal >= severeThreshold) {
+                        activeCell.style.backgroundColor = "#ffcccc";
+                        activeCell.style.color = "#721c24";
+                        activeCell.style.fontWeight = "bold";
+                    } else if (activeVal >= warnThreshold) {
+                        activeCell.style.backgroundColor = "#fff3cd";
+                        activeCell.style.color = "#856404";
+                        activeCell.style.fontWeight = "bold";
+                    } else {
+                        activeCell.style.backgroundColor = "#d4edda";
+                        activeCell.style.color = "#155724";
+                    }
+
+                    const ratePct = item.rate * 100;
+                    if (activeVal < warnThreshold && ratePct > 50) {
+                        diagCell.innerHTML = `🟢 <strong>試題品質優良（適合區分低成就與一般學生）</strong><span class="diag-sub">作答組型與全體學生能力排序一致，試題穩定度佳。</span>`;
+                    } else if (activeVal >= warnThreshold && ratePct > 50) {
+                        diagCell.innerHTML = `🟡 <strong>建議局部檢視或編修試題（作答組型較不一致）</strong><span class="diag-sub">部分高分學生答錯此較易試題，可能含有誘答力過強之干擾選項、題意略欠明確或涉及異質概念。</span>`;
+                    } else if (activeVal < warnThreshold && ratePct <= 50) {
+                        diagCell.innerHTML = `🔵 <strong>優質進階難題（適合區分高成就學生）</strong><span class="diag-sub">雖答對率較低，但主要由高分群學生答對，階層鑑別效果良好。</span>`;
+                    } else {
+                        diagCell.innerHTML = `🔴 <strong>建議重新檢視試題內容或計分鍵（作答組型明顯偏離預期）</strong><span class="diag-sub">答對率低且高分群答錯、低分群反而答對，可能存在題意歧義、超出教學範圍、多向度內容或標準答案設定問題。</span>`;
+                    }
+                }
+            });
+
+            // 渲染學生注意係數表
+            const studentCautionBody = document.querySelector('#studentCautionTable tbody');
+            studentCautionBody.innerHTML = '';
+            res.sortedStudents.forEach((st, rankIdx) => {
+                const row = studentCautionBody.insertRow();
+                row.insertCell().textContent = `#${rankIdx + 1}`;
+                row.insertCell().textContent = st.id;
+
+                const pct = (st.rate * 100).toFixed(1);
+                row.insertCell().textContent = `${st.score} / ${res.J} (${pct}%)`;
+
+                const activeVal = isSato ? st.cautionSato : st.cautionModified;
+                const activeStatus = isSato ? st.statusSato : st.statusModified;
+                const altVal = isSato ? st.cautionModified : st.cautionSato;
+
+                const activeCell = row.insertCell();
+                const altCell = row.insertCell();
+                altCell.style.color = '#64748b';
+                altCell.textContent = (altVal === null) ? "null" : altVal.toFixed(3);
+
+                const diagCell = row.insertCell();
+                diagCell.className = 'diagnosis-cell';
+
+                if (activeVal === null) {
+                    activeCell.textContent = formatCautionStatus(activeStatus);
+                    activeCell.style.backgroundColor = "#e2e8f0";
+                    activeCell.style.color = "#475569";
+                    const extremeNote = st.score === res.J ? "全對（滿分）" : (st.score === 0 ? "全錯（零分）" : "試題難度無變異");
+                    diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${extremeNote}，分母為零）</strong><span class="diag-sub">缺乏組型變異可供比較，請直接參照得分百分比評估該生學習表現。</span>`;
+                } else {
+                    activeCell.textContent = activeVal.toFixed(3);
+                    if (activeVal >= severeThreshold) {
+                        activeCell.style.backgroundColor = "#ffcccc";
+                        activeCell.style.color = "#721c24";
+                        activeCell.style.fontWeight = "bold";
+                    } else if (activeVal >= warnThreshold) {
+                        activeCell.style.backgroundColor = "#fff3cd";
+                        activeCell.style.color = "#856404";
+                        activeCell.style.fontWeight = "bold";
+                    } else {
+                        activeCell.style.backgroundColor = "#d4edda";
+                        activeCell.style.color = "#155724";
+                    }
+
+                    const scorePct = st.rate * 100;
+                    if (scorePct > 75 && activeVal < warnThreshold) {
+                        diagCell.innerHTML = `🟢 <strong>學習表現良好、穩定性高</strong><span class="diag-sub">作答組型與本次樣本整體難易排序一致，基礎與進階概念掌握理想。</span>`;
+                    } else if (scorePct > 75 && activeVal >= warnThreshold) {
+                        diagCell.innerHTML = `🟡 <strong>整體表現佳，但可能偶有粗心失誤或特定基礎概念疏漏</strong><span class="diag-sub">作答組型與整體難易排序較不一致（答對難題卻答錯簡單題），建議結合錯題內容與解題歷程查核。</span>`;
+                    } else if (scorePct >= 50 && scorePct <= 75 && activeVal < warnThreshold) {
+                        diagCell.innerHTML = `🔵 <strong>學習表現尚穩定，可持續精進進階概念</strong><span class="diag-sub">作答組型符合試題難易階層，建議針對尚未掌握之中高難度單元加強輔導。</span>`;
+                    } else if (scorePct >= 50 && scorePct <= 75 && activeVal >= warnThreshold) {
+                        diagCell.innerHTML = `🟠 <strong>準備可能尚欠全面，或偶有粗心與概念混淆情形</strong><span class="diag-sub">作答組型與樣本難易排序較不一致，建議檢視簡單錯題以釐清特定迷思概念。</span>`;
+                    } else if (scorePct < 50 && activeVal < warnThreshold) {
+                        diagCell.innerHTML = `🟣 <strong>基礎學力可能尚待充實，建議加強系統性補救教學</strong><span class="diag-sub">作答組型符合難易排序惟整體得分偏低，建議由基礎核心概念循序輔導。</span>`;
+                    } else {
+                        diagCell.innerHTML = `🔴 <strong>學習表現較不穩定，可能對內容缺乏充分準備或有隨機猜測傾向</strong><span class="diag-sub">得分偏低且作答組型與難易排序明顯不一致，建議深入了解其解題歷程與學習困難。</span>`;
+                    }
+                }
+            });
+
+            // 渲染古典測驗理論試題分析表
+            const itemAnalysisBody = document.querySelector('#itemAnalysisTable tbody');
+            itemAnalysisBody.innerHTML = '';
+            res.itemAnalysis.forEach(item => {
+                const row = itemAnalysisBody.insertRow();
+                row.insertCell().textContent = item.id;
+                row.insertCell().textContent = `${item.correctCount} / ${res.N}`;
+                row.insertCell().textContent = item.difficulty;
+                row.insertCell().textContent = item.discrimination;
+
+                const diffCell = row.insertCell();
+                diffCell.textContent = item.difficultyLabel;
+                diffCell.style.fontWeight = "bold";
+                if (item.difficultyLabel === "很容易" || item.difficultyLabel === "很困難") diffCell.style.color = "#dc3545";
+                else if (item.difficultyLabel === "中等") diffCell.style.color = "#16a34a";
+                else diffCell.style.color = "#d97706";
+
+                const discCell = row.insertCell();
+                discCell.textContent = item.discriminationLabel;
+                discCell.style.fontWeight = "bold";
+                if (item.discriminationLabel === "很好" || item.discriminationLabel === "好") discCell.style.color = "#16a34a";
+                else if (item.discriminationLabel === "可接受") discCell.style.color = "#d97706";
+                else discCell.style.color = "#dc3545";
+            });
+        }
+    </script>
+</body>
+</html>
