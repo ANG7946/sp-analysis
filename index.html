@@ -5,219 +5,284 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S-P 表分析工具 (標準驗證版)</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            /* 北歐溫潤大地色系 (Nordic Warm Taupe) */
+            --bg-canvas: #ebe8e1;          /* 暖石灰陶土底色，降低整體畫面反差 */
+            --surface-card: #f5f4ef;       /* 溫和岩石灰卡片表面 */
+            --surface-elevated: #faf9f6;   /* 微浮層 (輸入框、表格本體) */
+            --text-main: #2b2926;          /* 深炭褐，極具溫度的沉穩主色 */
+            --text-secondary: #635f58;     /* 暖灰次要說明文字 */
+            --text-muted: #8c877e;         /* 石質標籤文字 */
+            --border-stone: #d3cec4;       /* 柔和石紋邊框 */
+            --border-crisp: #b8b2a5;       /* 結構外框 */
+            --nordic-spruce: #314d43;      /* 北歐冷杉綠 (主按鈕) */
+            --nordic-spruce-hover: #243a32;
+            --nordic-slate: #365470;       /* 石板灰藍 (重點數值) */
+            --terracotta-red: #a44838;     /* 陶土磚紅 (0分、警告標示) */
+            --deviation-bg: #f4e4df;       /* 溫暖柔和的粉陶色 (異常反應格) */
+            --sp-s-line: #1d4ed8;          /* S 曲線 (學生)：深邃鮮明的皇家藍實線 (Solid) */
+            --sp-p-line: #047857;          /* P 曲線 (試題)：高辨識度翡翠冷杉綠虛線 (Dashed) */
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
-            min-height: 100vh;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-color: var(--bg-canvas);
+            color: var(--text-main);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
+
         .container {
-            background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            background: var(--surface-card);
+            border: 1px solid var(--border-stone);
+            border-radius: 14px;
+            box-shadow: 0 8px 24px -4px rgba(43, 41, 38, 0.06);
             max-width: 1100px;
-            margin: 30px auto;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: fadeIn 0.6s ease-out;
+            margin: 0 auto;
+            padding: 42px;
         }
-        h1, h2 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 25px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+
+        h1, h2, h3 {
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.015em;
         }
+
         h1 {
-            font-size: 2.3rem;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 1.9rem;
+            text-align: left;
+            margin-top: 0;
+            margin-bottom: 24px;
+            padding-bottom: 18px;
+            border-bottom: 1px solid var(--border-stone);
         }
+
+        h2 {
+            font-size: 0.88rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-secondary);
+            margin: 30px 0 16px 0;
+        }
+
+        .results h3 {
+            font-size: 1.15rem;
+            margin: 34px 0 14px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-stone);
+        }
+
+        .results h3:first-child {
+            margin-top: 0;
+        }
+
         label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #444;
+            margin-bottom: 6px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
+
         textarea {
-            width: calc(100% - 34px);
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 2px solid rgba(102, 126, 234, 0.3);
-            border-radius: 10px;
-            font-size: 0.95rem;
-            font-family: Consolas, Monaco, monospace;
-            line-height: 1.5;
-            min-height: 150px;
-            resize: vertical;
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.95);
+            width: 100%;
+            box-sizing: border-box;
+            padding: 13px 16px;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-stone);
+            border-radius: 8px;
+            font-size: 0.92rem;
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            background: var(--surface-elevated);
+            color: var(--text-main);
+            transition: all 0.2s ease;
         }
+
         textarea:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 15px rgba(102, 126, 234, 0.2);
+            border-color: var(--nordic-spruce);
             outline: none;
+            box-shadow: 0 0 0 3px rgba(49, 77, 67, 0.14);
         }
+
         .btn-primary {
             display: block;
             width: 100%;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            padding: 14px 20px;
+            background: var(--nordic-spruce);
+            color: #ffffff;
             border: none;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
-        }
-        .btn-secondary {
-            display: inline-block;
-            padding: 8px 14px;
-            background: #eef2ff;
-            color: #4f46e5;
-            border: 1px solid #c7d2fe;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(49, 77, 67, 0.15);
+            margin: 22px 0;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary:hover {
+            background: var(--nordic-spruce-hover);
+            box-shadow: 0 4px 12px rgba(49, 77, 67, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            padding: 7px 13px;
+            background: var(--surface-elevated);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-stone);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
             margin-bottom: 12px;
             margin-right: 8px;
         }
+
         .btn-secondary:hover {
-            background: #e0e7ff;
-            transform: translateY(-1px);
+            background: #ffffff;
+            color: var(--text-main);
+            border-color: var(--border-crisp);
         }
+
         .control-bar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             justify-content: space-between;
-            gap: 15px;
-            background: #f8fafc;
-            padding: 16px 20px;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            margin-bottom: 20px;
+            gap: 12px;
+            background: var(--surface-elevated);
+            padding: 14px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-stone);
+            margin: 20px 0;
         }
+
         .control-bar label {
             margin-bottom: 0;
-            color: #1e293b;
-            font-size: 1rem;
+            color: var(--text-main);
+            font-size: 0.92rem;
         }
+
         .version-select {
-            padding: 10px 16px;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #1e293b;
-            background-color: #fff;
-            border: 2px solid #667eea;
-            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: var(--text-main);
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-stone);
+            border-radius: 6px;
             cursor: pointer;
             outline: none;
-            transition: all 0.2s ease;
         }
+
         .version-select:focus {
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+            border-color: var(--nordic-spruce);
+            box-shadow: 0 0 0 3px rgba(49, 77, 67, 0.1);
         }
+
         .results {
-            background: rgba(241, 245, 249, 0.95);
-            padding: 25px;
-            border-radius: 15px;
-            margin-top: 25px;
-            border-left: 5px solid #667eea;
-            animation: fadeIn 0.5s ease-out;
+            background: var(--surface-elevated);
+            padding: 30px;
+            border-radius: 10px;
+            margin-top: 30px;
+            border: 1px solid var(--border-stone);
         }
-        .results h3 {
-            color: #2c3e50;
-            margin-top: 25px;
-            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        .results h3:first-child {
-            margin-top: 0;
-        }
-        .results p {
-            margin-bottom: 10px;
-            line-height: 1.6;
-        }
-        .results p strong {
-            color: #4f46e5;
-        }
+
+        /* 摘要數據卡片 (Architectural Grid) */
         .summary-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 14px;
+            margin: 18px 0 26px 0;
         }
+
         .summary-card {
-            background: #fff;
-            padding: 15px 18px;
-            border-radius: 10px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            background: var(--surface-card);
+            padding: 16px 18px;
+            border-radius: 8px;
+            border: 1px solid var(--border-stone);
         }
+
         .summary-card .card-label {
-            font-size: 0.85rem;
-            color: #64748b;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
             font-weight: 600;
-            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
         }
+
         .summary-card .card-value {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #1e293b;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--text-main);
+            font-variant-numeric: tabular-nums;
+            font-family: 'JetBrains Mono', monospace;
         }
+
         .summary-card .card-sub {
             font-size: 0.8rem;
-            color: #64748b;
+            color: var(--text-secondary);
             margin-top: 4px;
         }
+
+        /* 低反差自然數據表格 */
         .table-wrapper {
             overflow-x: auto;
-            margin-top: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin: 16px 0;
+            border: 1px solid var(--border-stone);
+            border-radius: 8px;
+            background: var(--surface-card);
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            background: #fff;
+            font-size: 0.88rem;
+            font-variant-numeric: tabular-nums;
         }
+
         table, th, td {
-            border: 1px solid rgba(203, 213, 225, 0.7);
+            border: 1px solid var(--border-stone);
         }
-        th, td {
+
+        th {
+            background: #dedbd2;          /* 陶土中灰表頭 */
+            color: var(--text-main);
+            font-weight: 600;
             padding: 10px 12px;
             text-align: center;
-        }
-        th {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-weight: bold;
+            border-bottom: 2px solid var(--border-crisp);
             white-space: nowrap;
         }
-        /* S-P 表格的十字定位效果 */
+
+        td {
+            padding: 8px 12px;
+            text-align: center;
+            color: var(--text-main);
+        }
+
+        /* 十字定位效果微調 (低飽和高反饋) */
         #spTable {
             position: relative;
             overflow: hidden;
         }
+
         #spTable td.sp-cell-1:hover,
         #spTable td.sp-cell-0:hover {
-            background-color: rgba(102, 126, 234, 0.35) !important;
+            background-color: #e2ddd5 !important;
             position: relative;
         }
+
         #spTable td.sp-cell-1:hover::before,
         #spTable td.sp-cell-0:hover::before {
             content: '';
@@ -226,10 +291,11 @@
             bottom: -2000px;
             left: 0;
             right: 0;
-            background-color: rgba(102, 126, 234, 0.15);
+            background-color: rgba(49, 77, 67, 0.06);
             z-index: 0;
             pointer-events: none;
         }
+
         #spTable td.sp-cell-1:hover::after,
         #spTable td.sp-cell-0:hover::after {
             content: '';
@@ -238,161 +304,239 @@
             right: -2000px;
             top: 0;
             bottom: 0;
-            background-color: rgba(102, 126, 234, 0.15);
+            background-color: rgba(49, 77, 67, 0.06);
             z-index: 0;
             pointer-events: none;
         }
-        .warning {
-            color: #dc3545;
-            background: #fff5f5;
-            border: 1px solid #feb2b2;
-            padding: 15px;
-            border-radius: 10px;
-            font-weight: bold;
-            margin-top: 15px;
-            text-align: center;
-        }
-        .deviation {
-            background-color: rgba(254, 215, 215, 0.65);
-        }
-        /* S 曲線邊界 (藍色實線) */
-        .sp-boundary-s-right {
-            border-right: 3px solid #2563eb !important;
-        }
-        .sp-boundary-s-left {
-            border-left: 3px solid #2563eb !important;
-        }
-        .sp-boundary-s-bottom {
-            border-bottom: 3px solid #2563eb !important;
-        }
-        /* P 曲線邊界 (綠色實線) */
-        .sp-boundary-p-bottom {
-            border-bottom: 3px solid #16a34a !important;
-        }
-        .sp-boundary-p-top {
-            border-top: 3px solid #16a34a !important;
-        }
-        .sp-boundary-p-right {
-            border-right: 3px solid #16a34a !important;
-        }
+
         .sp-cell-1 {
-            color: #3b82f6;
-            font-weight: bold;
+            color: #334155;                /* 深石板墨灰：降低數字色彩干擾，讓兩條 S/P 曲線立體凸顯 */
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
         }
+
         .sp-cell-0 {
-            color: #ef4444;
+            color: var(--terracotta-red);
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
         }
-        .legend-item {
-            margin-bottom: 8px;
-            padding: 6px 8px;
-            border-radius: 5px;
-            line-height: 1.5;
+
+        .deviation {
+            background-color: var(--deviation-bg);
         }
-        .legend-color-box {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 1px solid #ccc;
-            vertical-align: middle;
-            margin-right: 8px;
-            border-radius: 3px;
+
+        /* S 曲線 (學生累積得分線)：深藍色 3.5px 經典實線 (Solid) */
+        .sp-boundary-s-right {
+            border-right: 3.5px solid var(--sp-s-line) !important;
         }
+
+        .sp-boundary-s-left {
+            border-left: 3.5px solid var(--sp-s-line) !important;
+        }
+
+        .sp-boundary-s-bottom {
+            border-bottom: 3.5px solid var(--sp-s-line) !important;
+        }
+
+        /* P 曲線 (試題答對人數線)：翡翠深綠 3.5px 經典虛線 (Dashed) */
+        .sp-boundary-p-bottom {
+            border-bottom: 3.5px dashed var(--sp-p-line) !important;
+        }
+
+        .sp-boundary-p-top {
+            border-top: 3.5px dashed var(--sp-p-line) !important;
+        }
+
+        .sp-boundary-p-right {
+            border-right: 3.5px dashed var(--sp-p-line) !important;
+        }
+
+        /* 手風琴折疊按鈕 */
         .collapsible {
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            color: #1e293b;
+            background: var(--surface-card);
+            color: var(--text-secondary);
             cursor: pointer;
-            padding: 14px 18px;
+            padding: 12px 16px;
             width: 100%;
-            border: 1px solid #cbd5e1;
+            border: 1px solid var(--border-stone);
             text-align: left;
             outline: none;
-            font-size: 0.98rem;
-            font-weight: bold;
-            border-radius: 10px;
-            margin-top: 15px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            border-radius: 6px;
+            margin-top: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: all 0.25s ease;
+            transition: all 0.15s ease;
         }
+
         .collapsible:hover, .collapsible.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-color: transparent;
+            background: #dedbd2;
+            color: var(--text-main);
+            border-color: var(--border-crisp);
         }
+
         .collapsible::after {
             content: '\002B';
             font-weight: bold;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
         }
+
         .collapsible.active::after {
             content: '\2212';
         }
+
         .collapsible-content {
-            padding: 0 20px;
+            padding: 0 16px;
             max-height: 0;
             overflow: hidden;
-            transition: all 0.35s ease;
-            background: rgba(255, 255, 255, 0.98);
-            border-left: 4px solid #667eea;
-            border-radius: 0 0 10px 10px;
+            transition: all 0.25s ease-out;
+            background: var(--surface-elevated);
+            border-left: 3px solid var(--nordic-spruce);
+            border-radius: 0 0 6px 6px;
         }
+
         .collapsible-content.active {
-            padding: 18px 20px;
+            padding: 14px 16px;
             max-height: 1200px;
-            border-bottom: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
+            border-bottom: 1px solid var(--border-stone);
+            border-right: 1px solid var(--border-stone);
         }
+
+        .legend-item {
+            margin-bottom: 6px;
+            font-size: 0.86rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .legend-color-box {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1px solid var(--border-crisp);
+            vertical-align: middle;
+            margin-right: 6px;
+            border-radius: 2px;
+        }
+
         .input-section {
-            background: rgba(248, 250, 252, 0.95);
+            background: var(--surface-elevated);
             padding: 22px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            margin-bottom: 18px;
+            border: 1px solid var(--border-stone);
         }
+
         .input-section h3 {
             margin-top: 0;
-            color: #2c3e50;
-            font-size: 1.2rem;
+            font-size: 1.05rem;
+            color: var(--text-main);
         }
+
         input[type="file"] {
-            width: calc(100% - 36px);
-            padding: 14px;
-            margin-bottom: 10px;
-            border: 2px dashed #667eea;
-            border-radius: 10px;
-            background: #fff;
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px;
+            margin-bottom: 8px;
+            border: 1px dashed var(--border-crisp);
+            border-radius: 6px;
+            background: var(--surface-card);
             cursor: pointer;
         }
+
         .file-preview {
-            background: #f1f5f9;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 12px;
-            border: 1px solid #cbd5e1;
+            background: var(--surface-card);
+            padding: 14px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid var(--border-stone);
         }
+
         .preview-table {
-            max-height: 220px;
+            max-height: 200px;
             overflow-y: auto;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            background: #fff;
+            border: 1px solid var(--border-stone);
+            border-radius: 6px;
+            background: var(--surface-elevated);
         }
+
+        .warning {
+            color: #8c3222;
+            background: #f8ebe8;
+            border: 1px solid #ebd0c8;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            margin-top: 14px;
+            text-align: center;
+        }
+
         .diagnosis-cell {
             text-align: left !important;
-            font-size: 0.92rem;
-            line-height: 1.45;
+            font-size: 0.86rem;
+            line-height: 1.5;
         }
+
         .diag-sub {
             display: block;
-            color: #64748b;
-            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-size: 0.78rem;
             margin-top: 2px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        /* 頁尾學術典藏資訊 (Academic Colophon) */
+        .academic-footer {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-stone);
+            color: var(--text-secondary);
+            font-size: 0.86rem;
+            line-height: 1.6;
+        }
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        .footer-left {
+            flex: 1 1 320px;
+        }
+        .footer-right {
+            flex: 1 1 280px;
+            background: var(--surface-elevated);
+            padding: 12px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border-stone);
+            font-size: 0.82rem;
+        }
+        .footer-title {
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+        .footer-meta {
+            margin-bottom: 6px;
+        }
+        .footer-link a {
+            color: var(--nordic-spruce);
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .footer-link a:hover {
+            color: var(--nordic-spruce-hover);
+        }
+        .footer-ref-title {
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .footer-ref-text {
+            color: var(--text-muted);
+            line-height: 1.5;
         }
     </style>
 </head>
@@ -448,23 +592,24 @@
                 </div>
                 <div class="summary-card">
                     <div class="card-label">S-P 曲線差異面積格數 (C)</div>
-                    <div class="card-value" id="curveAreaCells" style="color: #4f46e5;">-</div>
+                    <div class="card-value" id="curveAreaCells" style="color: var(--nordic-slate);">-</div>
                     <div class="card-sub" id="curveAreaRatio">-</div>
                 </div>
                 <div class="summary-card">
-                    <div class="card-label">差異係數 (D*) 狀態</div>
-                    <div class="card-value" style="font-size: 1rem; color: #64748b; margin-top: 6px;">未啟用 (待補常數表)</div>
-                    <div class="card-sub">請以面積 C 與各別 CS/CP 進行診斷</div>
+                    <div class="card-label">模擬差異係數 (D*sim)</div>
+                    <div class="card-value" id="summaryDstarSim" style="color: var(--nordic-spruce);">-</div>
+                    <div class="card-sub" id="summaryDstarSimSub">隨機基準 E(C) 計算中...</div>
                 </div>
             </div>
 
-            <button type="button" class="collapsible">📊 S-P 曲線差異面積 (C) 與 D* 說明</button>
+            <button type="button" class="collapsible">📊 S-P 曲線差異面積 (C) 與 D*sim 說明</button>
             <div class="collapsible-content">
                 <div class="legend-item"><strong>1. S-P 曲線差異面積格數 (C)：</strong>指排序後矩陣中，S 曲線（學生總分累積線）與 P 曲線（試題答對人數累積線）之間所夾的對稱差面積格數：<code>C = Σ_i |r_i - h_i|</code>。</div>
                 <div class="legend-item">• <code>C</code> 恆為非負偶整數。當作答完全符合理想 Guttman 階層組型時，S 曲線與 P 曲線完全重疊，此時 <code>C = 0</code>。</div>
                 <div class="legend-item">• <code>C</code> 越大，代表學生總分分佈與試題難度分佈之間的落差越大（曲線分離程度越高）。</div>
-                <div class="legend-item"><strong>2. 為什麼暫不顯示差異係數 D*？</strong></div>
-                <div class="legend-item">• 文獻中的 <code>D* = C / [4 × N × J × p̄ × (1 - p̄) × D_B(M)]</code> 需依賴佐藤（1975）的二項分佈邊界查表常數 <code>D_B(M)</code>。在未載入經完整核對之原著常數表前，任意以公式代換會導致分母失真，故本工具直接提供精確無誤差之幾何面積格數 <code>C</code> 與面積佔比 <code>C / (N × J)</code>。</div>
+                <div class="legend-item"><strong>2. 模擬差異係數 D*sim (動態蒙地卡羅基準)：</strong></div>
+                <div class="legend-item">• 依據佐藤（1975）的理論假設，假定在相同平均答對率 <code>p̄</code> 下進行全隨機作答（二項分佈 <code>Bernoulli(p̄)</code>），系統於背景即時進行 500 次蒙地卡羅隨機排列模擬，估計隨機期望面積 <code>E(C_sim)</code>。</div>
+                <div class="legend-item">• <code>D*sim = C_實際 / E(C_sim)</code>。數值越小代表越接近理想 Guttman 階層組型：<code>D*sim ≤ 0.35</code> 代表階層結構極佳；<code>0.35 &lt; D*sim ≤ 0.60</code> 代表良好配適；<code>D*sim &gt; 0.60</code> 代表偏離程度較大，測驗內部一致性可能偏低。</div>
             </div>
 
             <h3>排序後的 S-P 表 (含 S/P 階梯曲線標示)</h3>
@@ -479,13 +624,13 @@
             <div class="collapsible-content">
                 <div class="legend-item"><span class="legend-color-box sp-cell-1"></span> <code>1</code>：答對（依學生總分由高至低、試題答對人數由多至少排列）</div>
                 <div class="legend-item"><span class="legend-color-box sp-cell-0"></span> <code>0</code>：答錯</div>
-                <div class="legend-item"><span class="legend-color-box" style="background-color: rgba(254, 215, 215, 0.85);"></span> 粉紅底色：該格作答與 S 曲線理想遮罩（<code>j &lt; r_i</code>）或 P 曲線理想遮罩（<code>i &lt; c_j</code>）不一致</div>
-                <div class="legend-item"><span class="legend-color-box" style="border-right: 3px solid #2563eb; border-bottom: 3px solid #2563eb;"></span> <strong>藍色階梯線（S 曲線）</strong>：每位學生左起第 <code>r_i</code> 題之後的垂直與水平連接邊界</div>
-                <div class="legend-item"><span class="legend-color-box" style="border-bottom: 3px solid #16a34a; border-right: 3px solid #16a34a;"></span> <strong>綠色階梯線（P 曲線）</strong>：每道試題上起第 <code>c_j</code> 位學生之後的水平與垂直連接邊界</div>
+                <div class="legend-item"><span class="legend-color-box" style="background-color: var(--deviation-bg);"></span> 粉陶底色：該格作答與 S 曲線理想遮罩（<code>j &lt; r_i</code>）或 P 曲線理想遮罩（<code>i &lt; c_j</code>）不一致</div>
+                <div class="legend-item"><span class="legend-color-box" style="border-right: 3.5px solid var(--sp-s-line); border-bottom: 3.5px solid var(--sp-s-line);"></span> <strong>深藍階梯實線（S 曲線 / 實線）</strong>：每位學生依其總得分（<code>r_i</code>）之水平與垂直連接邊界</div>
+                <div class="legend-item"><span class="legend-color-box" style="border-bottom: 3.5px dashed var(--sp-p-line); border-right: 3.5px dashed var(--sp-p-line);"></span> <strong>翠綠階梯虛線（P 曲線 / 虛線）</strong>：每道試題依其答對人數（<code>c_j</code>）之水平與垂直連接邊界</div>
             </div>
 
             <h3>試題注意係數與品質評估 (<span id="itemTableVersionTitle">Sato 原始 CP</span>)</h3>
-            <p style="font-size: 0.9rem; color: #555;">以下依<strong>S-P 表排序後之試題順序（由易至難）</strong>排列，並保留原始題號方便對照：</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">以下依<strong>S-P 表排序後之試題順序（由易至難）</strong>排列，並保留原始題號方便對照：</p>
             <div class="table-wrapper">
                 <table id="itemCautionTable">
                     <thead>
@@ -513,7 +658,7 @@
             </div>
 
             <h3>學生注意係數與學習診斷 (<span id="studentTableVersionTitle">Sato 原始 CS</span>)</h3>
-            <p style="font-size: 0.9rem; color: #555;">以下依<strong>S-P 表排序後之學生順序（總分由高至低）</strong>排列，並保留原始學生編號：</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);">以下依<strong>S-P 表排序後之學生順序（總分由高至低）</strong>排列，並保留原始學生編號：</p>
             <div class="table-wrapper">
                 <table id="studentCautionTable">
                     <thead>
@@ -560,6 +705,31 @@
                 </table>
             </div>
         </div>
+
+        <!-- 頁尾學術典藏與維護者資訊 -->
+        <footer class="academic-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <div class="footer-title">S-P 表分析工具 (S-P Chart Diagnostic Tool)</div>
+                    <div class="footer-meta">
+                        維護與開發：<strong>林祖強</strong>
+                        <span style="color: var(--border-crisp); margin: 0 4px;">|</span>
+                        國立高雄師範大學 科學教育暨環境教育研究所
+                    </div>
+                    <div class="footer-link">
+                        研究與個人網站：<a href="https://tclin.tw" target="_blank" rel="noopener noreferrer">https://tclin.tw ↗</a>
+                    </div>
+                </div>
+                <div class="footer-right">
+                    <div class="footer-ref-title">理論與計算規格依據</div>
+                    <div class="footer-ref-text">
+                        • Takahiro Sato (1975) <em>S-P 表の作成と解釈</em><br>
+                        • Harnisch & Linn (1981) <em>Analysis of Item Response Patterns</em><br>
+                        • 動態蒙地卡羅隨機排列檢定基準 (Monte Carlo Permutation Baseline)
+                    </div>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -681,7 +851,7 @@
                 throw new Error("未找到包含 0 與 1 的作答資料列。");
             }
 
-            // 判斷第一欄是否為學生編號/姓名欄（若有任何一列的第一欄不是 0/1，或第一列左上角有標題文字且總欄數 > 1）
+            // 判斷第一欄是否為學生編號/姓名欄（若有任何一列的第一欄不是 0/1）
             let startCol = 0;
             if (dataRowsRaw.some(r => !isBinaryCell(r[0]))) {
                 startCol = 1;
@@ -806,6 +976,52 @@
         }
 
         /**
+         * 蒙地卡羅隨機二項模擬：估計全隨機作答下的期望曲線面積 E(C_sim)
+         * 依據佐藤(1975)二項隨機假設 Bernoulli(p̄)，執行 K 次模擬
+         */
+        function simulateRandomExpectation(N, J, pBar, runs = 500) {
+            if (pBar <= 0 || pBar >= 1) return { meanC: 0, runs, status: "extreme" };
+
+            let totalSimC = 0;
+            const rowTotals = new Int32Array(N);
+            const colTotals = new Int32Array(J);
+
+            for (let r = 0; r < runs; r++) {
+                rowTotals.fill(0);
+                colTotals.fill(0);
+
+                // 生成 Bernoulli(pBar) 隨機矩陣並直接累加邊際
+                for (let i = 0; i < N; i++) {
+                    for (let j = 0; j < J; j++) {
+                        if (Math.random() < pBar) {
+                            rowTotals[i]++;
+                            colTotals[j]++;
+                        }
+                    }
+                }
+
+                // 邊際遞減排序
+                rowTotals.sort().reverse();
+                colTotals.sort().reverse();
+
+                // 計算該次模擬的 S-P 面積 C
+                let runC = 0;
+                for (let i = 0; i < N; i++) {
+                    const r_i = rowTotals[i];
+                    for (let j = 0; j < J; j++) {
+                        const sMask = (j < r_i) ? 1 : 0;
+                        const pMask = (i < colTotals[j]) ? 1 : 0;
+                        if (sMask !== pMask) runC++;
+                    }
+                }
+                totalSimC += runC;
+            }
+
+            const meanC = totalSimC / runs;
+            return { meanC, runs, status: "ok" };
+        }
+
+        /**
          * S-P 表核心計算函式 (符合 SP_Table_AI_Development_Reference v1.0 規格)
          */
         function computeSPCore(matrix, studentIds = null, itemIds = null) {
@@ -915,13 +1131,18 @@
                 }
             }
 
+            // 蒙地卡羅動態模擬
+            const meanP = totalCorrect / (N * J);
+            const simRes = simulateRandomExpectation(N, J, meanP, 500);
+            const dStarSim = (simRes.meanC > 0) ? (curveAreaCells / simRes.meanC) : null;
+
             const itemAnalysis = calculateCTTItemAnalysis(matrix, rowTotals, pIds);
 
             return {
                 N,
                 J,
                 totalCorrect,
-                meanP: totalCorrect / (N * J),
+                meanP,
                 meanR: totalCorrect / N,
                 meanC: totalCorrect / J,
                 rowTotals,
@@ -937,8 +1158,11 @@
                 sortedItems: itemOrder.map(idx => itemsResult[idx]),
                 curveAreaCells,
                 curveAreaRatio: curveAreaCells / (N * J),
+                dStarSim: dStarSim !== null ? dStarSim.toFixed(3) : null,
+                simMeanC: simRes.meanC.toFixed(1),
+                simRuns: simRes.runs,
                 Dstar: null,
-                DstarStatus: "reference_table_unverified",
+                DstarStatus: "monte_carlo_simulated",
                 itemAnalysis
             };
         }
@@ -1039,6 +1263,29 @@
             document.getElementById('curveAreaCells').textContent = `${res.curveAreaCells} 格`;
             document.getElementById('curveAreaRatio').textContent = `佔總格數 ${(res.curveAreaRatio * 100).toFixed(1)}% (偶整數對稱差面積)`;
 
+            // 渲染蒙地卡羅差異係數 D*sim 卡片
+            const dstarEl = document.getElementById('summaryDstarSim');
+            const dstarSubEl = document.getElementById('summaryDstarSimSub');
+
+            if (res.dStarSim !== null) {
+                const dVal = parseFloat(res.dStarSim);
+                dstarEl.textContent = dVal.toFixed(3);
+
+                if (dVal <= 0.35) {
+                    dstarEl.style.color = "var(--nordic-spruce)";
+                    dstarSubEl.innerHTML = `階層結構極佳 (隨機基準 E(C) ≈ ${res.simMeanC} 格)`;
+                } else if (dVal <= 0.6) {
+                    dstarEl.style.color = "var(--nordic-slate)";
+                    dstarSubEl.innerHTML = `符合預期模式 (隨機基準 E(C) ≈ ${res.simMeanC} 格)`;
+                } else {
+                    dstarEl.style.color = "var(--terracotta-red)";
+                    dstarSubEl.innerHTML = `偏離預期組型 (隨機基準 E(C) ≈ ${res.simMeanC} 格)`;
+                }
+            } else {
+                dstarEl.textContent = "無法計算";
+                dstarSubEl.textContent = "平均答對率為 0 或 1 (缺乏隨機變異)";
+            }
+
             document.getElementById('itemTableVersionTitle').textContent = isSato
                 ? "當前主指標：Sato 原始試題注意係數 (CP)"
                 : "當前主指標：Harnisch–Linn 修正試題注意係數 (CP*)";
@@ -1057,7 +1304,7 @@
             spTableBody.innerHTML = '';
 
             const headerRow = spTableHeader.insertRow();
-            headerRow.insertCell().textContent = '學生 \\ 題目';
+            headerRow.insertCell().textContent = '學生 \ 題目';
             res.sortedItems.forEach(item => {
                 headerRow.insertCell().textContent = item.id;
             });
@@ -1149,7 +1396,7 @@
 
                 const activeCell = row.insertCell();
                 const altCell = row.insertCell();
-                altCell.style.color = '#64748b';
+                altCell.style.color = 'var(--text-muted)';
                 altCell.textContent = (altVal === null) ? "null" : altVal.toFixed(3);
 
                 const diagCell = row.insertCell();
@@ -1157,22 +1404,22 @@
 
                 if (activeVal === null) {
                     activeCell.textContent = formatCautionStatus(activeStatus);
-                    activeCell.style.backgroundColor = "#e2e8f0";
-                    activeCell.style.color = "#475569";
+                    activeCell.style.backgroundColor = "#e2ddd5";
+                    activeCell.style.color = "var(--text-secondary)";
                     diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${activeStatus === 'extreme_score' ? '全體答對或全體答錯' : '學生總分無變異，分母為零'}）</strong><span class="diag-sub">此題無組型變異可供比較，請依整體教學目標評估是否保留作為基本題或挑戰題。</span>`;
                 } else {
                     activeCell.textContent = activeVal.toFixed(3);
                     if (activeVal >= severeThreshold) {
-                        activeCell.style.backgroundColor = "#ffcccc";
-                        activeCell.style.color = "#721c24";
+                        activeCell.style.backgroundColor = "var(--deviation-bg)";
+                        activeCell.style.color = "var(--terracotta-red)";
                         activeCell.style.fontWeight = "bold";
                     } else if (activeVal >= warnThreshold) {
-                        activeCell.style.backgroundColor = "#fff3cd";
-                        activeCell.style.color = "#856404";
+                        activeCell.style.backgroundColor = "#fef3c7";
+                        activeCell.style.color = "#92400e";
                         activeCell.style.fontWeight = "bold";
                     } else {
-                        activeCell.style.backgroundColor = "#d4edda";
-                        activeCell.style.color = "#155724";
+                        activeCell.style.backgroundColor = "#e6f4ea";
+                        activeCell.style.color = "var(--nordic-spruce)";
                     }
 
                     const ratePct = item.rate * 100;
@@ -1205,7 +1452,7 @@
 
                 const activeCell = row.insertCell();
                 const altCell = row.insertCell();
-                altCell.style.color = '#64748b';
+                altCell.style.color = 'var(--text-muted)';
                 altCell.textContent = (altVal === null) ? "null" : altVal.toFixed(3);
 
                 const diagCell = row.insertCell();
@@ -1213,23 +1460,23 @@
 
                 if (activeVal === null) {
                     activeCell.textContent = formatCautionStatus(activeStatus);
-                    activeCell.style.backgroundColor = "#e2e8f0";
-                    activeCell.style.color = "#475569";
+                    activeCell.style.backgroundColor = "#e2ddd5";
+                    activeCell.style.color = "var(--text-secondary)";
                     const extremeNote = st.score === res.J ? "全對（滿分）" : (st.score === 0 ? "全錯（零分）" : "試題難度無變異");
                     diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${extremeNote}，分母為零）</strong><span class="diag-sub">缺乏組型變異可供比較，請直接參照得分百分比評估該生學習表現。</span>`;
                 } else {
                     activeCell.textContent = activeVal.toFixed(3);
                     if (activeVal >= severeThreshold) {
-                        activeCell.style.backgroundColor = "#ffcccc";
-                        activeCell.style.color = "#721c24";
+                        activeCell.style.backgroundColor = "var(--deviation-bg)";
+                        activeCell.style.color = "var(--terracotta-red)";
                         activeCell.style.fontWeight = "bold";
                     } else if (activeVal >= warnThreshold) {
-                        activeCell.style.backgroundColor = "#fff3cd";
-                        activeCell.style.color = "#856404";
+                        activeCell.style.backgroundColor = "#fef3c7";
+                        activeCell.style.color = "#92400e";
                         activeCell.style.fontWeight = "bold";
                     } else {
-                        activeCell.style.backgroundColor = "#d4edda";
-                        activeCell.style.color = "#155724";
+                        activeCell.style.backgroundColor = "#e6f4ea";
+                        activeCell.style.color = "var(--nordic-spruce)";
                     }
 
                     const scorePct = st.rate * 100;
@@ -1262,16 +1509,16 @@
                 const diffCell = row.insertCell();
                 diffCell.textContent = item.difficultyLabel;
                 diffCell.style.fontWeight = "bold";
-                if (item.difficultyLabel === "很容易" || item.difficultyLabel === "很困難") diffCell.style.color = "#dc3545";
-                else if (item.difficultyLabel === "中等") diffCell.style.color = "#16a34a";
+                if (item.difficultyLabel === "很容易" || item.difficultyLabel === "很困難") diffCell.style.color = "var(--terracotta-red)";
+                else if (item.difficultyLabel === "中等") diffCell.style.color = "var(--nordic-spruce)";
                 else diffCell.style.color = "#d97706";
 
                 const discCell = row.insertCell();
                 discCell.textContent = item.discriminationLabel;
                 discCell.style.fontWeight = "bold";
-                if (item.discriminationLabel === "很好" || item.discriminationLabel === "好") discCell.style.color = "#16a34a";
+                if (item.discriminationLabel === "很好" || item.discriminationLabel === "好") discCell.style.color = "var(--nordic-spruce)";
                 else if (item.discriminationLabel === "可接受") discCell.style.color = "#d97706";
-                else discCell.style.color = "#dc3545";
+                else discCell.style.color = "var(--terracotta-red)";
             });
         }
     </script>
