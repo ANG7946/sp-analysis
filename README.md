@@ -69,8 +69,6 @@ LICENSE       本工具授權（MIT License）
 
 Harnisch, D. L., & Linn, R. L. (1981). Analysis of item response patterns: Questionable test data and dissimilar curriculum practices. *Journal of Educational Measurement, 18*(3), 133–146. https://doi.org/10.1111/j.1745-3984.1981.tb00848.x
 
-Miller & Burstein (1981). *Evaluation design project: Multilevel interpretation of evaluation data study*. ERIC ED212649. https://files.eric.ed.gov/fulltext/ED212649.pdf
+Miller, M. D., & Burstein, L. (1981). *Multilevel properties of test items: An exploratory study* (CSE Report 181). University of California, Los Angeles, Center for the Study of Evaluation.
 
-佐藤（Sato, 1975）。*S-P 表の作成と解釈*。
-
-> Miller 與 Burstein（1981）及佐藤（1975）的完整書目（作者全名、出版資訊）尚待補齊。
+佐藤隆博（1975）。*S-P表の作成と解釈*。明治図書出版。
