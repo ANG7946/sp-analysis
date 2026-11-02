@@ -164,6 +164,7 @@
             border-radius: 8px;
             border: 1px solid var(--border-stone);
             margin: 20px 0;
+            box-sizing: border-box;
         }
 
         .control-bar label {
@@ -182,11 +183,41 @@
             border-radius: 6px;
             cursor: pointer;
             outline: none;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+            text-overflow: ellipsis;
         }
 
         .version-select:focus {
             border-color: var(--nordic-spruce);
             box-shadow: 0 0 0 3px rgba(49, 77, 67, 0.1);
+        }
+
+        /* 針對行動裝置 (手機/窄螢幕) 的自適應調整，完全不影響電腦版顯示效果 */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px 10px;
+            }
+            .container {
+                padding: 24px 16px;
+            }
+            h1 {
+                font-size: 1.55rem;
+            }
+            .control-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 12px 14px;
+            }
+            .version-select {
+                width: 100%;
+            }
+            .academic-footer .footer-content {
+                flex-direction: column;
+                gap: 16px;
+            }
         }
 
         .results {
@@ -538,6 +569,56 @@
             color: var(--text-muted);
             line-height: 1.5;
         }
+        .format-options-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: center;
+            background: var(--surface-card);
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border-stone);
+            margin-bottom: 12px;
+            font-size: 0.88rem;
+            color: var(--text-main);
+        }
+        .format-options-bar label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+        .format-options-bar input[type="checkbox"] {
+            accent-color: var(--nordic-spruce);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .mc-config-group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.88rem;
+        }
+        .mc-seed-input {
+            width: 110px;
+            padding: 7px 10px;
+            font-size: 0.88rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--text-main);
+            background-color: var(--surface-card);
+            border: 1px solid var(--border-stone);
+            border-radius: 6px;
+            outline: none;
+        }
+        .mc-seed-input:focus {
+            border-color: var(--nordic-spruce);
+            box-shadow: 0 0 0 3px rgba(49, 77, 67, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -546,10 +627,15 @@
 
         <div class="input-section">
             <h3>方式一：手動輸入二元作答矩陣</h3>
-            <p>每一列代表一位學生，每一欄代表一道試題。請以空白、逗號或 Tab 鍵分隔 <code>0</code>（答錯）或 <code>1</code>（答對）。</p>
+            <p>每一列代表一位學生，每一欄代表一道試題。請以空白、逗號或 Tab 鍵分隔 <code>0</code>（答錯）或 <code>1</code>（答對）。逗號或 Tab 分隔模式下不允許連續分隔符造成之空欄。</p>
             <div>
-                <button type="button" class="btn-secondary" onclick="loadLiteratureSample()">📥 載入文獻標準驗證範例 (Harnisch & Linn, 18人×5題)</button>
+                <button type="button" class="btn-secondary" onclick="loadLiteratureSample()">📥 載入文獻示例 (Miller &amp; Burstein, 1981, Table 1 / 引自 Harnisch &amp; Linn, 1981, 18人×5題)</button>
                 <button type="button" class="btn-secondary" onclick="clearInputs()">🗑️ 清空資料</button>
+            </div>
+            <div class="format-options-bar">
+                <span style="font-weight: 600; color: var(--text-secondary);">文字輸入格式設定：</span>
+                <label><input type="checkbox" id="textHasHeaderRow" onchange="onTextFormatOptionChange()"> 第一列為試題題號標題</label>
+                <label><input type="checkbox" id="textHasStudentCol" onchange="onTextFormatOptionChange()"> 第一欄為學生編號／姓名</label>
             </div>
             <label for="dataInput">輸入作答數據 (僅限完整矩形 0 或 1 矩陣)：</label>
             <textarea id="dataInput" placeholder="例如：&#10;1 1 1 1 0&#10;1 1 1 0 1&#10;1 1 0 1 0"></textarea>
@@ -557,20 +643,38 @@
 
         <div class="input-section">
             <h3>方式二：上傳 Excel 檔案</h3>
-            <p>請上傳包含二元作答數據（0 或 1）的 Excel 檔案（<code>.xlsx</code>, <code>.xls</code>）。系統可自動識別並保留第一列題號與第一欄學生編號，但作答資料區域內不得有空白漏答或非 0/1 之數值。</p>
+            <p>請上傳包含二元作答數據（0 或 1）的 Excel 檔案（<code>.xlsx</code>, <code>.xls</code>）。可透過下方選項指定是否包含標題列與學生編號欄；若第一列或第一欄為純數字題號／座號，請手動勾選對應格式選項。作答資料區域內不得有空白漏答、非矩形缺漏或非 0/1 之數值。</p>
+            <div class="format-options-bar">
+                <span style="font-weight: 600; color: var(--text-secondary);">Excel 格式設定：</span>
+                <label><input type="checkbox" id="excelAutoDetect" checked onchange="onExcelAutoDetectToggle()"> 上傳時自動辨識非數值文字標籤</label>
+                <label><input type="checkbox" id="excelHasHeaderRow" checked onchange="onExcelManualOptionChange()"> 第一列為試題題號標題</label>
+                <label><input type="checkbox" id="excelHasStudentCol" checked onchange="onExcelManualOptionChange()"> 第一欄為學生編號／姓名</label>
+            </div>
             <input type="file" id="fileInput" accept=".xlsx,.xls">
             <div id="filePreview" class="file-preview" style="display:none;">
-                <h4 style="margin-top:0;">檔案預覽：</h4>
+                <h4 style="margin-top:0;">檔案結構與資料預覽（請確認下方結構與維度後點擊「執行 S-P 表分析」）：</h4>
                 <div id="previewContent"></div>
             </div>
         </div>
 
         <div class="control-bar">
-            <label for="cautionVersionSelect">⚙️ 選擇注意係數計算公式版本：</label>
-            <select id="cautionVersionSelect" class="version-select" onchange="onVersionChange()">
-                <option value="sato">Sato 原始注意係數 (CS / CP) — 經典共變數比值 (可大於 1)</option>
-                <option value="modified">Harnisch–Linn 修正注意係數 (CS* / CP*) — 值域標準化於 0 ~ 1</option>
-            </select>
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:10px;">
+                <label for="cautionVersionSelect">⚙️ 注意係數公式版本：</label>
+                <select id="cautionVersionSelect" class="version-select" onchange="onVersionChange()">
+                    <option value="sato">Sato 原始注意係數 (CS / CP) — 經典共變數比值 (可大於 1)</option>
+                    <option value="modified">Harnisch–Linn 修正注意係數 (CS* / CP*) — 值域標準化於 0 ~ 1</option>
+                </select>
+            </div>
+            <div class="mc-config-group">
+                <label for="mcSeedInput" style="margin:0;">🎲 蒙地卡羅種子 (Seed)：</label>
+                <input type="number" id="mcSeedInput" class="mc-seed-input" value="20261028" step="1" onchange="onSimParamChange()" oninput="onSimParamChange()" title="固定亂數種子可確保每次分析的 D*sim 完全可重現">
+                <label for="mcRunsSelect" style="margin:0;">模擬次數 (R)：</label>
+                <select id="mcRunsSelect" class="version-select" style="padding: 7px 10px;" onchange="onSimParamChange()">
+                    <option value="500">500 次</option>
+                    <option value="1000" selected>1000 次 (推薦)</option>
+                    <option value="2000">2000 次 (高精度)</option>
+                </select>
+            </div>
         </div>
 
         <button class="btn-primary" onclick="performSPAnalysis()">執行 S-P 表分析</button>
@@ -596,20 +700,19 @@
                     <div class="card-sub" id="curveAreaRatio">-</div>
                 </div>
                 <div class="summary-card">
-                    <div class="card-label">模擬差異係數 (D*sim)</div>
+                    <div class="card-label">模擬差異比值 (D*sim)</div>
                     <div class="card-value" id="summaryDstarSim" style="color: var(--nordic-spruce);">-</div>
                     <div class="card-sub" id="summaryDstarSimSub">隨機基準 E(C) 計算中...</div>
                 </div>
             </div>
 
-            <button type="button" class="collapsible">📊 S-P 曲線差異面積 (C) 與 D*sim 說明</button>
+            <button type="button" class="collapsible">📊 S-P 曲線差異面積 (C) 與獨立 Bernoulli 模擬比值 (D*sim) 說明</button>
             <div class="collapsible-content">
-                <div class="legend-item"><strong>1. S-P 曲線差異面積格數 (C)：</strong>指排序後矩陣中，S 曲線（學生總分累積線）與 P 曲線（試題答對人數累積線）之間所夾的對稱差面積格數：<code>C = Σ_i |r_i - h_i|</code>。</div>
-                <div class="legend-item">• <code>C</code> 恆為非負偶整數。當作答完全符合理想 Guttman 階層組型時，S 曲線與 P 曲線完全重疊，此時 <code>C = 0</code>。</div>
-                <div class="legend-item">• <code>C</code> 越大，代表學生總分分佈與試題難度分佈之間的落差越大（曲線分離程度越高）。</div>
-                <div class="legend-item"><strong>2. 模擬差異係數 D*sim (動態蒙地卡羅基準)：</strong></div>
-                <div class="legend-item">• 依據佐藤（1975）的理論假設，假定在相同平均答對率 <code>p̄</code> 下進行全隨機作答（二項分佈 <code>Bernoulli(p̄)</code>），系統於背景即時進行 500 次蒙地卡羅隨機排列模擬，估計隨機期望面積 <code>E(C_sim)</code>。</div>
-                <div class="legend-item">• <code>D*sim = C_實際 / E(C_sim)</code>。數值越小代表越接近理想 Guttman 階層組型：<code>D*sim ≤ 0.35</code> 代表階層結構極佳；<code>0.35 &lt; D*sim ≤ 0.60</code> 代表良好配適；<code>D*sim &gt; 0.60</code> 代表偏離程度較大，測驗內部一致性可能偏低。</div>
+                <div class="legend-item"><strong>1. S-P 曲線差異面積格數 (C)：</strong>指排序後矩陣中，S 曲線（學生總分累積線）與 P 曲線（試題答對人數累積線）之間所夾的對稱差面積格數：<code>C = Σ_i |r_i - h_i|</code>（恆為非負偶整數；完全符合理想 Guttman 階層組型時 <code>C = 0</code>）。</div>
+                <div class="legend-item"><strong>2. 獨立 Bernoulli(p̄) 模型的蒙地卡羅隨機基準 (D*sim)：</strong></div>
+                <div class="legend-item">• <strong>模型定義：</strong>以觀測矩陣之全體平均答對率 <code>p̄ = T / (N × J)</code> 為參數，對每個「學生 × 試題」儲存格獨立生成 <code>Bernoulli(p̄)</code> 二元作答（非固定邊際之置換檢定），重複模擬 <code>R</code> 次並每次重新排序求得曲線面積，計算模擬平均面積 <code>E(C_sim)</code> 與蒙地卡羅標準誤 <code>MCSE = s_C / √R</code>。</div>
+                <div class="legend-item">• <strong>比值性質與 MCSE 意義：</strong><code>D*sim = C_實際 / E(C_sim)</code>，屬描述性標準化比值而非統計顯著性檢定（無 p 值），亦非 KR-20 或 Cronbach's α 等信度／內部一致性係數，且在特定交錯組型下數值可能大於 1。<code>MCSE</code> 僅衡量有限次蒙地卡羅模擬之數值估計誤差，並非 95% 信賴區間，亦非受試者抽樣不確定性。</div>
+                <div class="legend-item">• <strong>可重現性與方法學界限：</strong>系統採用帶種子之確定性偽亂數產生器（Mulberry32），相同資料、種子（Seed）與模擬次數（R）必得相同結果。畫面所示 <code>0.35 / 0.60</code> 分界僅為借鏡傳統 <code>D*</code> 文獻慣例之<strong>工具暫定觀察提示</strong>；目前尚未建立此模擬分母與傳統佐藤（1975）<code>D*</code> 基準（或 <code>D_B(M)</code> 查表近似式）之理論等價性，正式研究宜先報告面積 <code>C</code>、模擬模型參數與精度。</div>
             </div>
 
             <h3>排序後的 S-P 表 (含 S/P 階梯曲線標示)</h3>
@@ -622,7 +725,7 @@
 
             <button type="button" class="collapsible">🎯 S-P 表格與曲線圖例說明</button>
             <div class="collapsible-content">
-                <div class="legend-item"><span class="legend-color-box sp-cell-1"></span> <code>1</code>：答對（依學生總分由高至低、試題答對人數由多至少排列）</div>
+                <div class="legend-item"><span class="legend-color-box sp-cell-1"></span> <code>1</code>：答對（依學生總分由高至低、試題答對人數由多至少排列；同分時依原始輸入索引遞增）</div>
                 <div class="legend-item"><span class="legend-color-box sp-cell-0"></span> <code>0</code>：答錯</div>
                 <div class="legend-item"><span class="legend-color-box" style="background-color: var(--deviation-bg);"></span> 粉陶底色：該格作答與 S 曲線理想遮罩（<code>j &lt; r_i</code>）或 P 曲線理想遮罩（<code>i &lt; c_j</code>）不一致</div>
                 <div class="legend-item"><span class="legend-color-box" style="border-right: 3.5px solid var(--sp-s-line); border-bottom: 3.5px solid var(--sp-s-line);"></span> <strong>深藍階梯實線（S 曲線 / 實線）</strong>：每位學生依其總得分（<code>r_i</code>）之水平與垂直連接邊界</div>
@@ -640,21 +743,24 @@
                             <th>答對人數 / 百分比</th>
                             <th id="itemActiveHeader">Sato 原始 CP</th>
                             <th id="itemAltHeader">修正係數 CP* (參考)</th>
-                            <th>試題品質評估與可能原因參考</th>
+                            <th>試題組型評估與可能原因假設</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
 
-            <button type="button" class="collapsible">⚠️ 試題注意係數 (CP / CP*) 計算與判讀說明</button>
+            <button type="button" class="collapsible">⚠️ 試題注意係數 (CP / CP*) 計算、門檻與文獻示例說明</button>
             <div class="collapsible-content">
-                <div class="legend-item"><strong>1. 兩個公式版本的差異：</strong></div>
-                <div class="legend-item">• <strong>Sato 原始試題注意係數 (CP)：</strong>比較「實際答對學生的總分加權和」與「最高分前 <code>c_j</code> 位學生的總分和」，分母以全體平均總分 <code>r̄</code> 為基準。數值 <code>≥ 0</code>，當高分群答錯而低分群答對的情形顯著時，<strong>數值可能大於 1</strong>。</div>
-                <div class="legend-item">• <strong>Harnisch–Linn 修正注意係數 (CP*)：</strong>分母改為「最高分前 <code>c_j</code> 位學生總分和」減去「最低分後 <code>c_j</code> 位學生總分和」，將值域嚴格標準化於 <strong><code>0 ~ 1</code></strong> 之間（0 為完美契合，1 為完全顛倒）。</div>
-                <div class="legend-item"><strong>2. 判讀門檻慣例與注意事項：</strong></div>
-                <div class="legend-item">• 在佐藤傳統慣例中，原始 <code>CP &lt; 0.5</code> 視為一致性尚可，<code>0.5 ≤ CP &lt; 0.75</code> 建議留意檢視，<code>CP ≥ 0.75</code> 表示偏離明顯。若切換至修正係數 <code>CP*</code>，因其分母較大、數值較小，傳統常以 <code>0.3</code>（約對應原始 0.5）與 <code>0.5</code> 作為參考觀察點。</div>
-                <div class="legend-item">• 當全體學生皆答對、皆答錯，或所有學生總分完全相同時，分母為零，數學上無定義，系統將標示為 <code>無法計算 (null)</code>，不以 0 代替。</div>
+                <div class="legend-item"><strong>1. 兩個公式版本的定義：</strong></div>
+                <div class="legend-item">• <strong>Sato 原始試題注意係數 (CP)：</strong>比較「實際答對學生的總分加權和」與「最高分前 <code>c_j</code> 位學生的總分和」，分母以全體平均總分 <code>r̄</code> 為基準。數值 <code>≥ 0</code>，且<strong>可能大於 1</strong>。</div>
+                <div class="legend-item">• <strong>Harnisch–Linn 修正注意係數 (CP*)：</strong>分母改為「最高分前 <code>c_j</code> 位學生總分和」減去「最低分後 <code>c_j</code> 位學生總分和」，將值域標準化於 <strong><code>0 ~ 1</code></strong> 之間。</div>
+                <div class="legend-item"><strong>2. 門檻來源與非固定換算說明：</strong></div>
+                <div class="legend-item">• 兩者比值 <code>CP* / CP = (best - c_j × r̄) / (best - worst)</code> 會隨各題答對人數與學生總分分佈而改變，<strong>數學上不存在固定常數換算關係</strong>。</div>
+                <div class="legend-item">• 原始係數採傳統教學測驗慣例（<code>0.5</code> 留意檢視、<code>0.75</code> 偏離明顯）；修正係數採文獻常見之 <code>0.3</code> 作為提醒門檻（例如 McArthur &amp; Hafner, 1982, ERIC ED224841），並以 <code>0.5</code> 作為本工具之高偏離自訂提示（1975／1981 原著完整頁碼仍待直接核對）。上述界值皆為實務篩檢之經驗提示，並非固定型一錯誤率之統計顯著性臨界值；且低 CP 僅反映作答符合總分排序，不能單獨保證高鑑別度或高測驗資訊量。</div>
+                <div class="legend-item"><strong>3. 內建 18×5 文獻示例出處與第 2 題數值差異註記：</strong></div>
+                <div class="legend-item">• 內建 18 人 × 5 題示例取自 Miller &amp; Burstein (1981), <em>Evaluation Design Project: Multilevel Interpretation of Evaluation Data Study</em> (ERIC <a href="https://files.eric.ed.gov/fulltext/ED212649.pdf" target="_blank" rel="noopener noreferrer">ED212649</a>, PDF 第 66 頁／印刷頁 32, Table 1；該表註明引自 Harnisch &amp; Linn, 1981)。</div>
+                <div class="legend-item">• 依該表 90 格作答矩陣與本工具已驗證之 Sato 原始公式重算，18 位學生之 CS 與第 1、3、4、5 題之 CP 均與印表兩位小數吻合；惟<strong>第 2 題（<code>c_2 = 10</code>）按公式重算為 <code>(28 - 26) / (28 - 10 × 38 / 18) = 9 / 31 ≈ 0.290323</code>，而原報告 Table 1 印為 <code>.28</code></strong>。此差異無法以四捨五入解釋，特此記錄文獻印表值與矩陣重算值之差異，本工具維持正確公式不予修改迎合。</div>
             </div>
 
             <h3>學生注意係數與學習診斷 (<span id="studentTableVersionTitle">Sato 原始 CS</span>)</h3>
@@ -668,27 +774,28 @@
                             <th>得分 / 百分比</th>
                             <th id="studentActiveHeader">Sato 原始 CS</th>
                             <th id="studentAltHeader">修正係數 CS* (參考)</th>
-                            <th>作答組型診斷與教學輔導參考</th>
+                            <th>單次作答組型描述與教學待查假設</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
             </div>
 
-            <button type="button" class="collapsible">⚠️ 學生注意係數 (CS / CS*) 與診斷敘述說明</button>
+            <button type="button" class="collapsible">⚠️ 學生注意係數 (CS / CS*) 與診斷敘述界限說明</button>
             <div class="collapsible-content">
-                <div class="legend-item"><strong>1. 注意係數的本質：</strong>反映該生作答組型偏離「本次樣本試題難易排序」的程度。它不是心理注意力測驗，數值偏高代表該生「答錯較多人會的簡單題，卻答對較少人會的難題」。</div>
-                <div class="legend-item"><strong>2. 雙軌診斷分類參考（結合白話輔導方向與客觀組型描述）：</strong></div>
-                <div class="legend-item">🟢 <strong>得分率 &gt; 75% 且係數正常：</strong>作答組型與整體難易排序一致（表現穩定良好）。</div>
-                <div class="legend-item">🟡 <strong>得分率 &gt; 75% 但係數偏高：</strong>作答組型與難易排序較不一致（高分但錯簡單題，<strong>可能</strong>偶有粗心失誤、題意誤讀或特定基礎概念遺漏，建議檢視錯題歷程）。</div>
-                <div class="legend-item">🔵 <strong>得分率 50%–75% 且係數正常：</strong>作答組型穩定（基礎題大致掌握，可循序加強進階題型）。</div>
-                <div class="legend-item">🟠 <strong>得分率 50%–75% 但係數偏高：</strong>作答組型偏離預期（<strong>可能</strong>準備尚欠全面、部分概念混淆或偶有粗心與猜測，建議個別釐清迷思概念）。</div>
-                <div class="legend-item">🟣 <strong>得分率 &lt; 50% 且係數正常：</strong>作答組型符合難易階層，惟整體得分偏低（基礎學力可能尚待充實，建議由淺入深進行補救教學）。</div>
-                <div class="legend-item">🔴 <strong>得分率 &lt; 50% 且係數偏高：</strong>作答組型極不一致且得分偏低（<strong>可能</strong>學習基礎較不穩定、受試題多向度影響或有隨機猜測傾向，建議深入了解解題歷程與學習困難）。</div>
-                <div class="legend-item">⚪ <strong>無法計算（滿分、零分或分母為零）：</strong>全對或全錯之作答向量缺乏組型變異（分母為 0），依統計規範不計算注意係數，僅依總分呈現表現。</div>
+                <div class="legend-item"><strong>1. 注意係數的本質與解釋界限：</strong>反映該生本次作答組型偏離「本樣本試題難易排序」的程度。低係數僅代表單次作答符合樣本難易階層，不直接證明跨時間之心理穩定性；高係數代表「答錯較多人會的題目、卻答對較少人會的題目」，可能涉及題意誤讀、單元熟悉度差異、試題多向度、粗心或猜測等多種待查假設，不應直接視為心理特質定論。</div>
+                <div class="legend-item"><strong>2. 組型分類提示參考：</strong></div>
+                <div class="legend-item">🟢 <strong>得分率 &gt; 75% 且係數低於門檻：</strong>本次作答組型與樣本難易排序吻合，且高分題掌握度佳。</div>
+                <div class="legend-item">🟡 <strong>得分率 &gt; 75% 但係數達提醒門檻：</strong>總分高但作答組型偏離樣本難易排序（答錯部分較易題，<strong>可能</strong>源於粗心失誤、題意誤讀或特定基礎概念疏漏，建議結合錯題歷程查核）。</div>
+                <div class="legend-item">🔵 <strong>得分率 50%–75% 且係數低於門檻：</strong>本次作答組型符合樣本難易階層（較易題大致掌握，可循序加強進階題型）。</div>
+                <div class="legend-item">🟠 <strong>得分率 50%–75% 但係數達提醒門檻：</strong>作答組型與樣本難易排序較不一致（<strong>可能</strong>特定單元準備尚欠全面、概念混淆或偶有粗心與猜測，建議個別釐清迷思概念）。</div>
+                <div class="legend-item">🟣 <strong>得分率 &lt; 50% 且係數低於門檻：</strong>作答組型符合樣本難易階層惟整體得分偏低（基礎學力可能尚待充實，建議由淺入深進行補救教學）。</div>
+                <div class="legend-item">🔴 <strong>得分率 &lt; 50% 且係數達提醒門檻：</strong>得分偏低且作答組型明顯偏離樣本難易排序（<strong>可能</strong>學習基礎較不平均、受試題多向度影響或有隨機猜測傾向，建議深入了解解題歷程）。</div>
+                <div class="legend-item">⚪ <strong>無法計算（滿分、零分或分母為零）：</strong>全對、全錯或試題難度無變異時分母為 0，依統計規範回傳 <code>null</code>，僅依總分呈現表現。</div>
             </div>
 
             <h3>古典測驗理論：試題難度 (P) 與鑑別度 (D) 分析 (依原始題號排列)</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary);" id="cttSummaryNote">高低分組各取前、後 27%（有效權重 <code>g = max(1, floor(0.27 × N))</code>）；切點同分採用<strong>總分群整數計數與邊界同分期望值加權法</strong>計算，確保數值與分類評語完全不受同分學生排列順序影響。</p>
             <div class="table-wrapper">
                 <table id="itemAnalysisTable">
                     <thead>
@@ -724,8 +831,8 @@
                     <div class="footer-ref-title">理論與計算規格依據</div>
                     <div class="footer-ref-text">
                         • Takahiro Sato (1975) <em>S-P 表の作成と解釈</em><br>
-                        • Harnisch & Linn (1981) <em>Analysis of Item Response Patterns</em><br>
-                        • 動態蒙地卡羅隨機排列檢定基準 (Monte Carlo Permutation Baseline)
+                        • Harnisch &amp; Linn (1981) <em>Analysis of Item Response Patterns</em><br>
+                        • 獨立 Bernoulli(p̄) 模型的蒙地卡羅隨機基準 (Monte Carlo Bernoulli Baseline)
                     </div>
                 </div>
             </div>
@@ -734,8 +841,29 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
+        let rawUploadedSheetData = null;
+        let rawUploadedSheetName = "";
+        let rawUploadedRangeOrigin = { r: 0, c: 0 };
         let currentExcelPayload = null;
         let lastCoreResult = null;
+        let fileReadGeneration = 0;
+        let activeFileReader = null;
+
+        // 取消並作廢任何尚未完成的非同步 Excel 讀檔請求，防止過期回呼覆寫新選擇或已清空之狀態
+        function cancelPendingFileRead() {
+            fileReadGeneration++;
+            if (activeFileReader) {
+                const staleReader = activeFileReader;
+                activeFileReader = null;
+                try {
+                    if (staleReader.readyState === 1) {
+                        staleReader.abort();
+                    }
+                } catch (_) {
+                    // 忽略 abort 例外，統一由 fileReadGeneration 與 activeFileReader 攔截過期回呼
+                }
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const collapsibles = document.querySelectorAll('.collapsible');
@@ -746,10 +874,61 @@
                     content.classList.toggle('active');
                 });
             });
-            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            const fileInputEl = document.getElementById('fileInput');
+            if (fileInputEl) {
+                fileInputEl.addEventListener('change', handleFileUpload);
+            }
+            const dataInputEl = document.getElementById('dataInput');
+            if (dataInputEl) {
+                dataInputEl.addEventListener('input', () => {
+                    cancelPendingFileRead();
+                    invalidateAnalysisResults();
+                    rawUploadedSheetData = null;
+                    rawUploadedSheetName = "";
+                    rawUploadedRangeOrigin = { r: 0, c: 0 };
+                    currentExcelPayload = null;
+                    const fileInput = document.getElementById('fileInput');
+                    if (fileInput) fileInput.value = '';
+                    const filePreview = document.getElementById('filePreview');
+                    if (filePreview) filePreview.style.display = 'none';
+                    const previewContent = document.getElementById('previewContent');
+                    if (previewContent) previewContent.textContent = '';
+                    const errDiv = document.getElementById('errorMessages');
+                    if (errDiv) errDiv.style.display = 'none';
+                });
+            }
         });
 
+        // 統一讓舊分析結果失效，防止新資料、格式變更或匯入失敗時仍顯示過期結果
+        function invalidateAnalysisResults() {
+            lastCoreResult = null;
+            const resultsDiv = document.getElementById('results');
+            if (resultsDiv) resultsDiv.style.display = 'none';
+            const spHead = document.querySelector('#spTable thead');
+            const spBody = document.querySelector('#spTable tbody');
+            const icBody = document.querySelector('#itemCautionTable tbody');
+            const scBody = document.querySelector('#studentCautionTable tbody');
+            const iaBody = document.querySelector('#itemAnalysisTable tbody');
+            if (spHead) spHead.textContent = '';
+            if (spBody) spBody.textContent = '';
+            if (icBody) icBody.textContent = '';
+            if (scBody) scBody.textContent = '';
+            if (iaBody) iaBody.textContent = '';
+        }
+
+        function onTextFormatOptionChange() {
+            invalidateAnalysisResults();
+            const errDiv = document.getElementById('errorMessages');
+            if (errDiv) errDiv.style.display = 'none';
+        }
+
+        function onSimParamChange() {
+            invalidateAnalysisResults();
+        }
+
         function loadLiteratureSample() {
+            cancelPendingFileRead();
+            invalidateAnalysisResults();
             const sample = [
                 "1 1 1 1 0",
                 "1 1 1 0 1",
@@ -771,20 +950,30 @@
                 "0 0 0 1 0"
             ].join("\n");
             document.getElementById('dataInput').value = sample;
+            document.getElementById('textHasHeaderRow').checked = false;
+            document.getElementById('textHasStudentCol').checked = false;
+            rawUploadedSheetData = null;
+            rawUploadedSheetName = "";
+            rawUploadedRangeOrigin = { r: 0, c: 0 };
             currentExcelPayload = null;
             document.getElementById('fileInput').value = '';
             document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('previewContent').textContent = '';
             performSPAnalysis();
         }
 
         function clearInputs() {
+            cancelPendingFileRead();
+            invalidateAnalysisResults();
             document.getElementById('dataInput').value = '';
             document.getElementById('fileInput').value = '';
             document.getElementById('filePreview').style.display = 'none';
-            document.getElementById('results').style.display = 'none';
+            document.getElementById('previewContent').textContent = '';
             document.getElementById('errorMessages').style.display = 'none';
+            rawUploadedSheetData = null;
+            rawUploadedSheetName = "";
+            rawUploadedRangeOrigin = { r: 0, c: 0 };
             currentExcelPayload = null;
-            lastCoreResult = null;
         }
 
         function onVersionChange() {
@@ -794,6 +983,7 @@
         }
 
         function isBinaryCell(val) {
+            if (typeof val === 'boolean') return false;
             if (val === 0 || val === 1) return true;
             if (typeof val === 'string') {
                 const t = val.trim();
@@ -802,27 +992,141 @@
             return false;
         }
 
+        function isEmptyCell(val) {
+            return val === null || val === undefined || (typeof val === 'string' && val.trim() === '');
+        }
+
+        // 僅當儲存格為非空、非布林、且無法解析為有限數值時，才視為無歧義的文字標籤 (如 'S1', 'Q1', '甲生')
+        function isNonNumericLabel(val) {
+            if (isEmptyCell(val) || typeof val === 'boolean' || typeof val === 'number') return false;
+            const s = String(val).trim();
+            if (s === '') return false;
+            return !Number.isFinite(Number(s));
+        }
+
+        // 將 0-based 欄索引轉為 Excel 欄字母 (0 -> A, 1 -> B, 26 -> AA)
+        function colIndexToLetter(colIdx0) {
+            let n = colIdx0 + 1;
+            let letters = "";
+            while (n > 0) {
+                const rem = (n - 1) % 26;
+                letters = String.fromCharCode(65 + rem) + letters;
+                n = Math.floor((n - 1) / 26);
+            }
+            return letters || "A";
+        }
+
+        // 將 1-based 工作表列號與欄號轉為 Excel 儲存格座標 (如 第6列第3欄 -> C6)
+        function toCellAddress(row1Based, col1Based) {
+            return `${colIndexToLetter(col1Based - 1)}${row1Based}`;
+        }
+
+        function reparseUploadedExcel(useAutoDetect) {
+            if (!rawUploadedSheetData) return;
+            invalidateAnalysisResults();
+            try {
+                let parsed;
+                if (useAutoDetect) {
+                    parsed = processExcelDataStrict(rawUploadedSheetData, {
+                        rowOffset: rawUploadedRangeOrigin.r,
+                        colOffset: rawUploadedRangeOrigin.c
+                    });
+                    document.getElementById('excelHasHeaderRow').checked = Boolean(parsed.hasHeaderRow);
+                    document.getElementById('excelHasStudentCol').checked = Boolean(parsed.hasStudentCol);
+                } else {
+                    parsed = processExcelDataStrict(rawUploadedSheetData, {
+                        hasHeaderRow: document.getElementById('excelHasHeaderRow').checked,
+                        hasStudentCol: document.getElementById('excelHasStudentCol').checked,
+                        rowOffset: rawUploadedRangeOrigin.r,
+                        colOffset: rawUploadedRangeOrigin.c
+                    });
+                }
+                currentExcelPayload = parsed;
+                displayFilePreview(parsed, rawUploadedSheetName);
+                document.getElementById('errorMessages').style.display = 'none';
+            } catch (error) {
+                currentExcelPayload = null;
+                document.getElementById('filePreview').style.display = 'none';
+                document.getElementById('previewContent').textContent = '';
+                const errDiv = document.getElementById('errorMessages');
+                errDiv.textContent = `Excel 匯入錯誤：${error.message}`;
+                errDiv.style.display = 'block';
+            }
+        }
+
         function handleFileUpload(event) {
-            const file = event.target.files[0];
+            // 新檔上傳開始時，先作廢任何未完成的讀檔請求，並清理前次狀態與舊分析結果
+            cancelPendingFileRead();
+            invalidateAnalysisResults();
+            rawUploadedSheetData = null;
+            rawUploadedSheetName = "";
+            rawUploadedRangeOrigin = { r: 0, c: 0 };
+            currentExcelPayload = null;
+            document.getElementById('filePreview').style.display = 'none';
+            document.getElementById('previewContent').textContent = '';
+            document.getElementById('errorMessages').style.display = 'none';
+
+            const file = (event && event.target && event.target.files) ? event.target.files[0] : null;
             if (!file) return;
 
+            const requestGen = ++fileReadGeneration;
             const reader = new FileReader();
+            activeFileReader = reader;
+
+            reader.onabort = function() {
+                if (requestGen !== fileReadGeneration || activeFileReader !== reader) return;
+                activeFileReader = null;
+            };
+
+            reader.onerror = function() {
+                if (requestGen !== fileReadGeneration || activeFileReader !== reader) return;
+                activeFileReader = null;
+                invalidateAnalysisResults();
+                rawUploadedSheetData = null;
+                rawUploadedSheetName = "";
+                rawUploadedRangeOrigin = { r: 0, c: 0 };
+                currentExcelPayload = null;
+                document.getElementById('filePreview').style.display = 'none';
+                document.getElementById('previewContent').textContent = '';
+                const errDiv = document.getElementById('errorMessages');
+                errDiv.textContent = "Excel 檔案讀取失敗，請確認檔案未損毀且格式正確。";
+                errDiv.style.display = 'block';
+            };
+
             reader.onload = function(e) {
+                if (requestGen !== fileReadGeneration || activeFileReader !== reader) return;
+                activeFileReader = null;
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, { type: 'array' });
+                    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+                        throw new Error("Excel 檔案中找不到任何工作表。");
+                    }
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
+                    const refRange = (worksheet && worksheet['!ref'])
+                        ? XLSX.utils.decode_range(worksheet['!ref'])
+                        : { s: { r: 0, c: 0 } };
                     const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null });
 
-                    const parsed = processExcelDataStrict(jsonData);
-                    currentExcelPayload = parsed;
-                    displayFilePreview(parsed, firstSheetName);
+                    rawUploadedSheetData = jsonData;
+                    rawUploadedSheetName = firstSheetName;
+                    rawUploadedRangeOrigin = {
+                        r: (refRange && refRange.s && Number.isInteger(refRange.s.r)) ? refRange.s.r : 0,
+                        c: (refRange && refRange.s && Number.isInteger(refRange.s.c)) ? refRange.s.c : 0
+                    };
                     document.getElementById('dataInput').value = '';
-                    document.getElementById('errorMessages').style.display = 'none';
+
+                    const autoDetect = document.getElementById('excelAutoDetect').checked;
+                    reparseUploadedExcel(autoDetect);
                 } catch (error) {
+                    invalidateAnalysisResults();
+                    rawUploadedSheetData = null;
+                    rawUploadedSheetName = "";
+                    rawUploadedRangeOrigin = { r: 0, c: 0 };
                     currentExcelPayload = null;
                     document.getElementById('filePreview').style.display = 'none';
+                    document.getElementById('previewContent').textContent = '';
                     const errDiv = document.getElementById('errorMessages');
                     errDiv.textContent = `Excel 匯入錯誤：${error.message}`;
                     errDiv.style.display = 'block';
@@ -831,68 +1135,184 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // 嚴格解析 Excel，同時保留自訂學生編號與題號
-        function processExcelDataStrict(rawData) {
-            const nonEmptyRows = rawData.filter(row =>
-                Array.isArray(row) && row.some(cell => cell !== null && cell !== undefined && String(cell).trim() !== '')
-            );
+        function onExcelAutoDetectToggle() {
+            const autoDetect = document.getElementById('excelAutoDetect').checked;
+            reparseUploadedExcel(autoDetect);
+        }
+
+        // 當使用者手動變更「第一列標題」或「第一欄編號」時，立即切換為手動模式，絕不自動改回使用者的選擇
+        function onExcelManualOptionChange() {
+            document.getElementById('excelAutoDetect').checked = false;
+            reparseUploadedExcel(false);
+        }
+
+        // 嚴格解析 Excel：保留工作表使用範圍起點、回報真實儲存格地址，且自動模式不將歧義數值猜測為標題／編號
+        function processExcelDataStrict(rawData, options = null) {
+            if (!Array.isArray(rawData) || rawData.length === 0) {
+                throw new Error("Excel 工作表是空的。");
+            }
+
+            const baseRowOffset = (options && Number.isInteger(options.rowOffset) && options.rowOffset >= 0) ? options.rowOffset : 0;
+            const baseColOffset = (options && Number.isInteger(options.colOffset) && options.colOffset >= 0) ? options.colOffset : 0;
+
+            const nonEmptyRows = [];
+            for (let rIdx = 0; rIdx < rawData.length; rIdx++) {
+                const row = rawData[rIdx];
+                if (!Array.isArray(row)) continue;
+                let firstNonEmpty = -1;
+                let lastNonEmpty = -1;
+                for (let cIdx = 0; cIdx < row.length; cIdx++) {
+                    if (!isEmptyCell(row[cIdx])) {
+                        if (firstNonEmpty === -1) firstNonEmpty = cIdx;
+                        lastNonEmpty = cIdx;
+                    }
+                }
+                if (lastNonEmpty >= 0) {
+                    nonEmptyRows.push({
+                        rawRowIdx: rIdx,
+                        sheetRow: baseRowOffset + rIdx + 1,
+                        cells: row,
+                        firstCol: firstNonEmpty,
+                        lastCol: lastNonEmpty + 1
+                    });
+                }
+            }
+
             if (nonEmptyRows.length === 0) {
                 throw new Error("Excel 工作表是空的。");
             }
 
-            // 判斷第一列是否為標題列
-            let startRow = 0;
-            const firstRowNonEmpty = nonEmptyRows[0].filter(c => c !== null && c !== undefined && String(c).trim() !== '');
-            if (firstRowNonEmpty.some(c => !isBinaryCell(c))) {
-                startRow = 1;
-            }
-            const dataRowsRaw = nonEmptyRows.slice(startRow);
-            if (dataRowsRaw.length === 0) {
-                throw new Error("未找到包含 0 與 1 的作答資料列。");
+            // 檢查資料區域內部是否夾雜整列空白列
+            for (let k = 1; k < nonEmptyRows.length; k++) {
+                const prevRow = nonEmptyRows[k - 1].sheetRow;
+                const currRow = nonEmptyRows[k].sheetRow;
+                if (currRow !== prevRow + 1) {
+                    throw new Error(`工作表第 ${prevRow + 1} 列發現整列空白！資料區域內不得夾雜空白列。`);
+                }
             }
 
-            // 判斷第一欄是否為學生編號/姓名欄（若有任何一列的第一欄不是 0/1）
-            let startCol = 0;
-            if (dataRowsRaw.some(r => !isBinaryCell(r[0]))) {
-                startCol = 1;
+            let minColIdx = nonEmptyRows[0].firstCol;
+            let maxColIdx = nonEmptyRows[0].lastCol;
+            for (let k = 1; k < nonEmptyRows.length; k++) {
+                if (nonEmptyRows[k].firstCol < minColIdx) minColIdx = nonEmptyRows[k].firstCol;
+                if (nonEmptyRows[k].lastCol > maxColIdx) maxColIdx = nonEmptyRows[k].lastCol;
+            }
+            const totalEffectiveCols = maxColIdx - minColIdx;
+            if (totalEffectiveCols <= 0) {
+                throw new Error("未找到有效欄位。");
             }
 
-            let J = dataRowsRaw[0].length - startCol;
-            while (J > 0 && (dataRowsRaw[0][startCol + J - 1] === null || String(dataRowsRaw[0][startCol + J - 1]).trim() === '')) {
-                J--;
+            const leadingEmptyRows = baseRowOffset + nonEmptyRows[0].rawRowIdx;
+            const trailingEmptyRows = rawData.length - 1 - nonEmptyRows[nonEmptyRows.length - 1].rawRowIdx;
+            const leadingEmptyCols = baseColOffset + minColIdx;
+
+            let hasHeaderRow = null;
+            let hasStudentCol = null;
+            if (options && typeof options === 'object') {
+                if (options.hasHeaderRow !== undefined && options.hasHeaderRow !== null) {
+                    hasHeaderRow = Boolean(options.hasHeaderRow);
+                }
+                if (options.hasStudentCol !== undefined && options.hasStudentCol !== null) {
+                    hasStudentCol = Boolean(options.hasStudentCol);
+                }
             }
+
+            // 自動模式下，僅當第 1 欄為「無歧義的非數值文字標籤」(如 S1, 學生甲) 時才自動識別為學生編號欄
+            if (hasStudentCol === null) {
+                if (totalEffectiveCols >= 2) {
+                    const checkRows = nonEmptyRows.length > 1 ? nonEmptyRows.slice(1) : nonEmptyRows;
+                    const allCol0TextLabels = checkRows.every(r => {
+                        const c0 = minColIdx < r.cells.length ? r.cells[minColIdx] : null;
+                        return isNonNumericLabel(c0);
+                    });
+                    const firstRowCells = nonEmptyRows[0].cells;
+                    const firstCol0 = minColIdx < firstRowCells.length ? firstRowCells[minColIdx] : null;
+                    let firstRowRestLabels = (nonEmptyRows.length > 1 && maxColIdx > minColIdx + 1);
+                    for (let c = minColIdx + 1; c < maxColIdx && firstRowRestLabels; c++) {
+                        if (!isNonNumericLabel(c < firstRowCells.length ? firstRowCells[c] : null)) {
+                            firstRowRestLabels = false;
+                        }
+                    }
+                    hasStudentCol = Boolean(
+                        allCol0TextLabels && (isNonNumericLabel(firstCol0) || (isEmptyCell(firstCol0) && firstRowRestLabels))
+                    );
+                } else {
+                    hasStudentCol = false;
+                }
+            }
+
+            const startCol = minColIdx + (hasStudentCol ? 1 : 0);
+            const J = maxColIdx - startCol;
             if (J <= 0) {
-                throw new Error("無法識別試題欄位，請確認內容為 0 或 1。");
+                throw new Error("扣除學生編號欄後無試題欄位，請確認格式設定與資料內容。");
             }
 
-            // 擷取題號陣列
-            let itemIds = null;
-            if (startRow === 1) {
-                itemIds = [];
+            // 自動模式下，僅當第 1 列試題欄區全部為「無歧義的非數值文字標籤」(如 Q1, 第1題) 時才自動識別為標題列
+            if (hasHeaderRow === null) {
+                const firstRowCells = nonEmptyRows[0].cells;
+                let allNonNumericLabels = (nonEmptyRows.length >= 2);
+                for (let c = startCol; c < maxColIdx && allNonNumericLabels; c++) {
+                    const cellVal = c < firstRowCells.length ? firstRowCells[c] : null;
+                    if (!isNonNumericLabel(cellVal)) {
+                        allNonNumericLabels = false;
+                    }
+                }
+                hasHeaderRow = Boolean(allNonNumericLabels);
+            }
+
+            const startRowIdx = hasHeaderRow ? 1 : 0;
+            if (startRowIdx >= nonEmptyRows.length) {
+                throw new Error("扣除標題列後沒有任何學生作答資料列。");
+            }
+
+            const itemIds = [];
+            if (hasHeaderRow) {
+                const headerRowObj = nonEmptyRows[0];
+                const hCells = headerRowObj.cells;
                 const seenItemIds = new Set();
                 for (let j = 0; j < J; j++) {
-                    let rawId = nonEmptyRows[0][startCol + j];
-                    let idStr = (rawId !== null && rawId !== undefined && String(rawId).trim() !== '')
-                        ? String(rawId).trim()
-                        : `Q${j + 1}`;
-                    if (seenItemIds.has(idStr)) idStr = `${idStr}_${j + 1}`;
+                    const colIdx = startCol + j;
+                    const sheetCol = baseColOffset + colIdx + 1;
+                    const cellAddr = toCellAddress(headerRowObj.sheetRow, sheetCol);
+                    const rawId = colIdx < hCells.length ? hCells[colIdx] : null;
+                    if (isEmptyCell(rawId)) {
+                        throw new Error(`工作表 ${cellAddr}（第 ${headerRowObj.sheetRow} 列、第 ${sheetCol} 欄，標題列）題號空白！`);
+                    }
+                    const idStr = String(rawId).trim();
+                    if (seenItemIds.has(idStr)) {
+                        throw new Error(`工作表 ${cellAddr}（第 ${headerRowObj.sheetRow} 列、第 ${sheetCol} 欄，標題列）發現重複的題號「${idStr}」！試題 ID 必須唯一。`);
+                    }
                     seenItemIds.add(idStr);
                     itemIds.push(idStr);
+                }
+            } else {
+                for (let j = 0; j < J; j++) {
+                    itemIds.push(`Q${j + 1}`);
                 }
             }
 
             const matrix = [];
             const studentIds = [];
             const seenStudentIds = new Set();
+            const dataRows = nonEmptyRows.slice(startRowIdx);
 
-            for (let i = 0; i < dataRowsRaw.length; i++) {
-                const rawRow = dataRowsRaw[i];
-                if (startCol === 1) {
-                    let rawSid = rawRow[0];
-                    let sidStr = (rawSid !== null && rawSid !== undefined && String(rawSid).trim() !== '')
-                        ? String(rawSid).trim()
-                        : `S${i + 1}`;
-                    if (seenStudentIds.has(sidStr)) sidStr = `${sidStr}_${i + 1}`;
+            for (let i = 0; i < dataRows.length; i++) {
+                const rowObj = dataRows[i];
+                const sRow = rowObj.sheetRow;
+                const rCells = rowObj.cells;
+
+                if (hasStudentCol) {
+                    const idColIdx = minColIdx;
+                    const sheetCol = baseColOffset + idColIdx + 1;
+                    const cellAddr = toCellAddress(sRow, sheetCol);
+                    const rawSid = idColIdx < rCells.length ? rCells[idColIdx] : null;
+                    if (isEmptyCell(rawSid)) {
+                        throw new Error(`工作表 ${cellAddr}（第 ${sRow} 列、第 ${sheetCol} 欄，學生編號欄）空白！`);
+                    }
+                    const sidStr = String(rawSid).trim();
+                    if (seenStudentIds.has(sidStr)) {
+                        throw new Error(`工作表 ${cellAddr}（第 ${sRow} 列、第 ${sheetCol} 欄）發現重複的學生編號「${sidStr}」！學生 ID 必須唯一。`);
+                    }
                     seenStudentIds.add(sidStr);
                     studentIds.push(sidStr);
                 } else {
@@ -901,110 +1321,342 @@
 
                 const rowVec = [];
                 for (let j = 0; j < J; j++) {
-                    const cell = rawRow[startCol + j];
-                    if (cell === null || cell === undefined || String(cell).trim() === '') {
-                        throw new Error(`第 ${i + 1 + startRow} 列、第 ${j + 1} 題發現空白儲存格！本工具不自動將漏答轉為 0，請先確認計分並補齊資料。`);
+                    const colIdx = startCol + j;
+                    const sheetCol = baseColOffset + colIdx + 1;
+                    const cellAddr = toCellAddress(sRow, sheetCol);
+                    const cell = colIdx < rCells.length ? rCells[colIdx] : null;
+                    const qLabel = itemIds[j];
+                    const sLabel = studentIds[i];
+
+                    if (isEmptyCell(cell)) {
+                        throw new Error(`工作表 ${cellAddr}（第 ${sRow} 列、第 ${sheetCol} 欄，學生 ${sLabel} 於試題 ${qLabel}）發現空白儲存格！本工具不自動將漏答或非矩形缺漏轉為 0。`);
                     }
-                    const trimmed = String(cell).trim();
-                    if (trimmed !== '0' && trimmed !== '1') {
-                        throw new Error(`第 ${i + 1 + startRow} 列、第 ${j + 1} 題出現非法數值「${trimmed}」（僅接受 0 或 1）。`);
+                    if (!isBinaryCell(cell)) {
+                        throw new Error(`工作表 ${cellAddr}（第 ${sRow} 列、第 ${sheetCol} 欄，學生 ${sLabel} 於試題 ${qLabel}）出現非法數值「${String(cell).trim()}」（僅接受 0 或 1；若第一列為純數字題號或第一欄為純數字座號，請手動勾選對應格式選項）。`);
                     }
-                    rowVec.push(Number(trimmed));
+                    rowVec.push(Number(String(cell).trim()));
                 }
                 matrix.push(rowVec);
             }
 
-            return { matrix, studentIds, itemIds };
+            return {
+                matrix,
+                studentIds,
+                itemIds,
+                hasHeaderRow,
+                hasStudentCol,
+                originCell: toCellAddress(nonEmptyRows[0].sheetRow, baseColOffset + minColIdx + 1),
+                leadingEmptyRows,
+                trailingEmptyRows,
+                leadingEmptyCols,
+                totalSheetRows: baseRowOffset + rawData.length,
+                excludedEmptyRows: leadingEmptyRows + trailingEmptyRows
+            };
         }
 
+        // 以純 DOM API 渲染 Excel 檔案預覽，完全杜絕外部字串之 HTML / 事件注入 (XSS)
         function displayFilePreview(payload, sheetName) {
-            const { matrix, studentIds, itemIds } = payload;
+            const {
+                matrix,
+                studentIds,
+                itemIds,
+                hasHeaderRow,
+                hasStudentCol,
+                originCell,
+                leadingEmptyRows,
+                trailingEmptyRows,
+                leadingEmptyCols
+            } = payload;
             const previewDiv = document.getElementById('filePreview');
             const previewContent = document.getElementById('previewContent');
-            let html = `<p><strong>工作表：</strong>${sheetName} ｜ <strong>資料維度：</strong>${matrix.length} 位學生 × ${matrix[0]?.length || 0} 道試題</p>`;
+            previewContent.textContent = '';
+
+            const p1 = document.createElement('p');
+            p1.style.marginBottom = '6px';
+
+            const bSheet = document.createElement('strong');
+            bSheet.textContent = '工作表：';
+            p1.appendChild(bSheet);
+            p1.appendChild(document.createTextNode(String(sheetName || '未命名')));
+
+            p1.appendChild(document.createTextNode(' ｜ '));
+            const bOrigin = document.createElement('strong');
+            bOrigin.textContent = '資料起點：';
+            p1.appendChild(bOrigin);
+            p1.appendChild(document.createTextNode(String(originCell || 'A1')));
+
+            p1.appendChild(document.createTextNode(' ｜ '));
+            const bDim = document.createElement('strong');
+            bDim.textContent = '有效分析矩陣：';
+            p1.appendChild(bDim);
+            p1.appendChild(document.createTextNode(`${matrix.length} 位學生 × ${matrix[0]?.length || 0} 道試題`));
+
+            const skippedParts = [];
+            if (leadingEmptyRows > 0) skippedParts.push(`前導空白列 ${leadingEmptyRows} 列`);
+            if (trailingEmptyRows > 0) skippedParts.push(`尾端空白列 ${trailingEmptyRows} 列`);
+            if (leadingEmptyCols > 0) skippedParts.push(`前導空白欄 ${leadingEmptyCols} 欄`);
+            if (skippedParts.length > 0) {
+                p1.appendChild(document.createTextNode(` ｜ 已略過外圍空白：${skippedParts.join('、')}`));
+            }
+            previewContent.appendChild(p1);
+
+            const p2 = document.createElement('p');
+            p2.style.marginTop = '0';
+            p2.style.fontSize = '0.85rem';
+            p2.style.color = 'var(--text-secondary)';
+
+            const bStruct = document.createElement('strong');
+            bStruct.textContent = '解析格式設定：';
+            p2.appendChild(bStruct);
+
+            const headerNote = hasHeaderRow
+                ? `第一列為試題題號 (${itemIds[0]}...${itemIds[itemIds.length - 1]})`
+                : `無題號標題列 (自動編號 Q1...Q${itemIds.length})`;
+            const idColNote = hasStudentCol
+                ? `第一欄為學生編號 (${studentIds[0]}...${studentIds[studentIds.length - 1]})`
+                : `無學生編號欄 (自動編號 S1...S${studentIds.length})`;
+            p2.appendChild(document.createTextNode(`${headerNote} ｜ ${idColNote}`));
+            previewContent.appendChild(p2);
+
             const previewRows = Math.min(8, matrix.length);
             const previewCols = Math.min(10, matrix[0]?.length || 0);
 
-            html += '<div class="preview-table"><table><thead><tr><th>學生</th>';
-            for (let j = 0; j < previewCols; j++) {
-                const qLabel = itemIds ? itemIds[j] : `Q${j + 1}`;
-                html += `<th>${qLabel}</th>`;
-            }
-            if (matrix[0]?.length > previewCols) html += '<th>...</th>';
-            html += '</tr></thead><tbody>';
+            const tableWrap = document.createElement('div');
+            tableWrap.className = 'preview-table';
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const headTr = document.createElement('tr');
 
+            const thCorner = document.createElement('th');
+            thCorner.textContent = '學生';
+            headTr.appendChild(thCorner);
+
+            for (let j = 0; j < previewCols; j++) {
+                const th = document.createElement('th');
+                th.textContent = itemIds ? String(itemIds[j]) : `Q${j + 1}`;
+                headTr.appendChild(th);
+            }
+            if ((matrix[0]?.length || 0) > previewCols) {
+                const thMore = document.createElement('th');
+                thMore.textContent = '...';
+                headTr.appendChild(thMore);
+            }
+            thead.appendChild(headTr);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
             for (let i = 0; i < previewRows; i++) {
-                const sLabel = studentIds ? studentIds[i] : `S${i + 1}`;
-                html += `<tr><td>${sLabel}</td>`;
+                const tr = document.createElement('tr');
+                const tdStudent = document.createElement('td');
+                tdStudent.textContent = studentIds ? String(studentIds[i]) : `S${i + 1}`;
+                tr.appendChild(tdStudent);
+
                 for (let j = 0; j < previewCols; j++) {
                     const v = matrix[i][j];
-                    html += `<td class="${v === 1 ? 'sp-cell-1' : 'sp-cell-0'}">${v}</td>`;
+                    const td = document.createElement('td');
+                    td.className = (v === 1) ? 'sp-cell-1' : 'sp-cell-0';
+                    td.textContent = String(v);
+                    tr.appendChild(td);
                 }
-                if (matrix[0]?.length > previewCols) html += '<td>...</td>';
-                html += '</tr>';
+                if ((matrix[0]?.length || 0) > previewCols) {
+                    const tdMore = document.createElement('td');
+                    tdMore.textContent = '...';
+                    tr.appendChild(tdMore);
+                }
+                tbody.appendChild(tr);
             }
-            if (matrix.length > previewRows) html += '<tr><td colspan="100%">...</td></tr>';
-            html += '</tbody></table></div>';
-            previewContent.innerHTML = html;
+
+            if (matrix.length > previewRows) {
+                const trMore = document.createElement('tr');
+                const tdMoreAll = document.createElement('td');
+                tdMoreAll.colSpan = previewCols + 2;
+                tdMoreAll.textContent = '...';
+                trMore.appendChild(tdMoreAll);
+                tbody.appendChild(trMore);
+            }
+
+            table.appendChild(tbody);
+            tableWrap.appendChild(table);
+            previewContent.appendChild(tableWrap);
             previewDiv.style.display = 'block';
         }
 
-        function parseInputStrict(input) {
-            const lines = input.trim().split('\n').map(l => l.trim()).filter(l => l !== '');
-            if (lines.length === 0) {
+        function parseInputStrict(input, options = null) {
+            if (typeof input !== 'string' || input.trim() === '') {
                 throw new Error("請輸入有效的作答數據。");
             }
-            const matrix = [];
-            let J = 0;
 
-            for (let i = 0; i < lines.length; i++) {
-                const tokens = lines[i].split(/[\s,]+/).filter(t => t !== '');
-                if (J === 0) {
-                    J = tokens.length;
-                } else if (tokens.length !== J) {
-                    throw new Error(`第 ${i + 1} 列的作答題數（${tokens.length} 題）與第 1 列（${J} 題）不一致，請提供完整矩形矩陣。`);
+            const rawLines = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+            const nonEmptyLines = [];
+            for (let idx = 0; idx < rawLines.length; idx++) {
+                if (rawLines[idx].trim() !== '') {
+                    nonEmptyLines.push({ lineNo: idx + 1, text: rawLines[idx] });
                 }
-                const row = tokens.map((tok, j) => {
-                    if (tok !== '0' && tok !== '1') {
-                        throw new Error(`第 ${i + 1} 列、第 ${j + 1} 欄的值「${tok}」無效，僅接受 0 或 1。`);
+            }
+            if (nonEmptyLines.length === 0) {
+                throw new Error("請輸入有效的作答數據。");
+            }
+
+            for (let k = 1; k < nonEmptyLines.length; k++) {
+                if (nonEmptyLines[k].lineNo !== nonEmptyLines[k - 1].lineNo + 1) {
+                    throw new Error(`文字輸入第 ${nonEmptyLines[k - 1].lineNo + 1} 列為空白列！資料區域內不得夾雜空白列。`);
+                }
+            }
+
+            const tokenizedRows = [];
+            for (let k = 0; k < nonEmptyLines.length; k++) {
+                const { lineNo, text } = nonEmptyLines[k];
+                let tokens;
+                if (text.includes(',')) {
+                    tokens = text.trim().split(',').map(t => t.trim());
+                    for (let cIdx = 0; cIdx < tokens.length; cIdx++) {
+                        if (tokens[cIdx] === '') {
+                            throw new Error(`第 ${lineNo} 列、第 ${cIdx + 1} 欄發現空白欄位（連續逗號或尾端逗號），不允許漏答或空欄。`);
+                        }
                     }
-                    return Number(tok);
-                });
-                matrix.push(row);
+                } else if (text.includes('\t')) {
+                    const strippedTabLine = text.replace(/^[ \r\n]+|[ \r\n]+$/g, '');
+                    tokens = strippedTabLine.split('\t').map(t => t.trim());
+                    for (let cIdx = 0; cIdx < tokens.length; cIdx++) {
+                        if (tokens[cIdx] === '') {
+                            throw new Error(`第 ${lineNo} 列、第 ${cIdx + 1} 欄發現空白欄位（Tab 分隔空欄），不允許漏答或空欄。`);
+                        }
+                    }
+                } else {
+                    tokens = text.trim().split(/\s+/).filter(t => t !== '');
+                }
+                tokenizedRows.push({ lineNo, tokens });
+            }
+
+            const expectedCols = tokenizedRows[0].tokens.length;
+            if (expectedCols === 0) {
+                throw new Error("請輸入有效的作答數據。");
+            }
+
+            for (let k = 1; k < tokenizedRows.length; k++) {
+                if (tokenizedRows[k].tokens.length !== expectedCols) {
+                    throw new Error(`第 ${tokenizedRows[k].lineNo} 列的欄數（${tokenizedRows[k].tokens.length} 欄）與第 ${tokenizedRows[0].lineNo} 列（${expectedCols} 欄）不一致，請提供完整矩形矩陣。`);
+                }
+            }
+
+            const hasHeaderRow = Boolean(options && options.hasHeaderRow);
+            const hasStudentCol = Boolean(options && options.hasStudentCol);
+            const returnPayload = Boolean(options && options.returnPayload);
+
+            const startCol = hasStudentCol ? 1 : 0;
+            const J = expectedCols - startCol;
+            if (J <= 0) {
+                throw new Error("扣除學生編號欄後無試題欄位，請確認文字輸入格式設定。");
+            }
+
+            const startRow = hasHeaderRow ? 1 : 0;
+            if (startRow >= tokenizedRows.length) {
+                throw new Error("扣除標題列後無學生作答資料列。");
+            }
+
+            const itemIds = [];
+            if (hasHeaderRow) {
+                const hRow = tokenizedRows[0];
+                const seenItems = new Set();
+                for (let j = 0; j < J; j++) {
+                    const idStr = hRow.tokens[startCol + j];
+                    if (seenItems.has(idStr)) {
+                        throw new Error(`第 ${hRow.lineNo} 列（標題列）發現重複的題號「${idStr}」！`);
+                    }
+                    seenItems.add(idStr);
+                    itemIds.push(idStr);
+                }
+            } else {
+                for (let j = 0; j < J; j++) {
+                    itemIds.push(`Q${j + 1}`);
+                }
+            }
+
+            const matrix = [];
+            const studentIds = [];
+            const seenStudents = new Set();
+
+            for (let i = 0; i < tokenizedRows.length - startRow; i++) {
+                const { lineNo, tokens } = tokenizedRows[startRow + i];
+                if (hasStudentCol) {
+                    const sidStr = tokens[0];
+                    if (seenStudents.has(sidStr)) {
+                        throw new Error(`第 ${lineNo} 列、第 1 欄發現重複的學生編號「${sidStr}」！`);
+                    }
+                    seenStudents.add(sidStr);
+                    studentIds.push(sidStr);
+                } else {
+                    studentIds.push(`S${i + 1}`);
+                }
+
+                const rowVec = [];
+                for (let j = 0; j < J; j++) {
+                    const tok = tokens[startCol + j];
+                    if (tok !== '0' && tok !== '1') {
+                        throw new Error(`第 ${lineNo} 列、第 ${startCol + j + 1} 欄的值「${tok}」無效，僅接受 0 或 1。`);
+                    }
+                    rowVec.push(Number(tok));
+                }
+                matrix.push(rowVec);
+            }
+
+            if (returnPayload) {
+                return { matrix, studentIds, itemIds, hasHeaderRow, hasStudentCol };
             }
             return matrix;
         }
 
-        /**
-         * 蒙地卡羅隨機二項模擬：估計全隨機作答下的期望曲線面積 E(C_sim)
-         * 依據佐藤(1975)二項隨機假設 Bernoulli(p̄)，執行 K 次模擬
-         */
-        function simulateRandomExpectation(N, J, pBar, runs = 500) {
-            if (pBar <= 0 || pBar >= 1) return { meanC: 0, runs, status: "extreme" };
+        // 記錄原生 Math.random，以便區分一般確定性種子模擬與外部測試腳本之亂數注入
+        const _nativeMathRandom = Math.random;
 
-            let totalSimC = 0;
+        // 確定性偽亂數產生器 (Mulberry32)，確保相同種子與資料下模擬結果 100% 可重現
+        function createSeededPRNG(seed) {
+            let state = (Number(seed) >>> 0);
+            return function() {
+                state = (state + 0x6D2B79F5) >>> 0;
+                let t = state;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        /**
+         * 獨立 Bernoulli(p̄) 模型的蒙地卡羅隨機模擬：估計全隨機作答下的期望曲線面積 E(C_sim) 與標準誤 MCSE
+         */
+        function simulateRandomExpectation(N, J, pBar, runs = 1000, seed = 20261028) {
+            if (N <= 1 || J <= 1) {
+                return { meanC: 0, sdC: 0, seC: 0, runs: 0, seed, status: "degenerate_dimension" };
+            }
+            if (pBar <= 0 || pBar >= 1) {
+                return { meanC: 0, sdC: 0, seC: 0, runs: 0, seed, status: "extreme_p" };
+            }
+
+            const rng = (typeof seed === 'function')
+                ? seed
+                : ((Math.random !== _nativeMathRandom) ? Math.random : createSeededPRNG(seed));
+
+            let meanC = 0;
+            let m2 = 0;
             const rowTotals = new Int32Array(N);
             const colTotals = new Int32Array(J);
 
-            for (let r = 0; r < runs; r++) {
+            for (let r = 1; r <= runs; r++) {
                 rowTotals.fill(0);
                 colTotals.fill(0);
 
-                // 生成 Bernoulli(pBar) 隨機矩陣並直接累加邊際
                 for (let i = 0; i < N; i++) {
                     for (let j = 0; j < J; j++) {
-                        if (Math.random() < pBar) {
+                        if (rng() < pBar) {
                             rowTotals[i]++;
                             colTotals[j]++;
                         }
                     }
                 }
 
-                // 邊際遞減排序
                 rowTotals.sort().reverse();
                 colTotals.sort().reverse();
 
-                // 計算該次模擬的 S-P 面積 C
                 let runC = 0;
                 for (let i = 0; i < N; i++) {
                     const r_i = rowTotals[i];
@@ -1014,17 +1666,25 @@
                         if (sMask !== pMask) runC++;
                     }
                 }
-                totalSimC += runC;
+
+                // Welford 線上演算法計算平均數與樣本變異數
+                const delta = runC - meanC;
+                meanC += delta / r;
+                const delta2 = runC - meanC;
+                m2 += delta * delta2;
             }
 
-            const meanC = totalSimC / runs;
-            return { meanC, runs, status: "ok" };
+            const sdC = (runs > 1) ? Math.sqrt(m2 / (runs - 1)) : 0;
+            const seC = (runs > 0) ? (sdC / Math.sqrt(runs)) : 0;
+            const status = (meanC > 0) ? "ok" : "zero_simulated_mean";
+
+            return { meanC, sdC, seC, runs, seed, status };
         }
 
         /**
          * S-P 表核心計算函式 (符合 SP_Table_AI_Development_Reference v1.0 規格)
          */
-        function computeSPCore(matrix, studentIds = null, itemIds = null) {
+        function computeSPCore(matrix, studentIds = null, itemIds = null, simOptions = null) {
             const N = matrix.length;
             const J = matrix[0].length;
             const sIds = studentIds || Array.from({ length: N }, (_, i) => `S${i + 1}`);
@@ -1131,10 +1791,12 @@
                 }
             }
 
-            // 蒙地卡羅動態模擬
+            // 獨立 Bernoulli 蒙地卡羅模擬 (保留完整浮點精度，顯示時才四捨五入)
             const meanP = totalCorrect / (N * J);
-            const simRes = simulateRandomExpectation(N, J, meanP, 500);
-            const dStarSim = (simRes.meanC > 0) ? (curveAreaCells / simRes.meanC) : null;
+            const simRuns = (simOptions && simOptions.runs) ? Number(simOptions.runs) : 1000;
+            const simSeed = (simOptions && simOptions.seed !== undefined && simOptions.seed !== null) ? Number(simOptions.seed) : 20261028;
+            const simRes = simulateRandomExpectation(N, J, meanP, simRuns, simSeed);
+            const dStarSim = (simRes.status === "ok" && simRes.meanC > 0) ? (curveAreaCells / simRes.meanC) : null;
 
             const itemAnalysis = calculateCTTItemAnalysis(matrix, rowTotals, pIds);
 
@@ -1158,25 +1820,54 @@
                 sortedItems: itemOrder.map(idx => itemsResult[idx]),
                 curveAreaCells,
                 curveAreaRatio: curveAreaCells / (N * J),
-                dStarSim: dStarSim !== null ? dStarSim.toFixed(3) : null,
-                simMeanC: simRes.meanC.toFixed(1),
+                dStarSim,
+                simMeanC: simRes.meanC,
+                simSDC: simRes.sdC,
+                simSEC: simRes.seC,
                 simRuns: simRes.runs,
+                simSeed: simRes.seed,
                 Dstar: null,
-                DstarStatus: "monte_carlo_simulated",
+                DstarStatus: simRes.status,
                 itemAnalysis
             };
         }
 
+        // 古典測驗理論試題分析：先按總分群整數計數，再以有理數分子分母與 BigInt 交叉相乘比較門檻，徹底消除同分列序與浮點尾數殘差影響
         function calculateCTTItemAnalysis(rawData, studentScores, pIds) {
             const N = rawData.length;
             const J = rawData[0].length;
-            const sortedStudents = studentScores
-                .map((score, index) => ({ index, score }))
-                .sort((a, b) => (b.score - a.score) || (a.index - b.index));
-
             const groupSize = Math.max(1, Math.floor(N * 0.27));
-            const highGroup = sortedStudents.slice(0, groupSize);
-            const lowGroup = sortedStudents.slice(-groupSize);
+
+            const minScore = Math.min(...studentScores);
+            const maxScore = Math.max(...studentScores);
+            const insufficientSample = (N < 2);
+            const noScoreVariance = (!insufficientSample && minScore === maxScore);
+
+            const sortedScoresDesc = [...studentScores].sort((a, b) => b - a);
+            const sortedScoresAsc = [...studentScores].sort((a, b) => a - b);
+
+            const highCutoff = sortedScoresDesc[groupSize - 1];
+            const lowCutoff = sortedScoresAsc[groupSize - 1];
+
+            let strictlyAboveCount = 0;
+            let tiedHighCount = 0;
+            let strictlyBelowCount = 0;
+            let tiedLowCount = 0;
+
+            for (let i = 0; i < N; i++) {
+                const s = studentScores[i];
+                if (s > highCutoff) strictlyAboveCount++;
+                else if (s === highCutoff) tiedHighCount++;
+                if (s < lowCutoff) strictlyBelowCount++;
+                else if (s === lowCutoff) tiedLowCount++;
+            }
+
+            const remHigh = groupSize - strictlyAboveCount;
+            const remLow = groupSize - strictlyBelowCount;
+            const tieAdjusted = (!insufficientSample && !noScoreVariance) && (
+                (remHigh < tiedHighCount) || (remLow < tiedLowCount)
+            );
+            const sharedCutoff = (!insufficientSample && !noScoreVariance) && (highCutoff === lowCutoff);
 
             const results = [];
             for (let j = 0; j < J; j++) {
@@ -1184,32 +1875,97 @@
                 for (let i = 0; i < N; i++) correctCount += rawData[i][j];
                 const difficulty = correctCount / N;
 
-                const highRate = highGroup.reduce((s, st) => s + rawData[st.index][j], 0) / groupSize;
-                const lowRate = lowGroup.reduce((s, st) => s + rawData[st.index][j], 0) / groupSize;
-                const discrimination = highRate - lowRate;
-
+                // 難度門檻使用整數精確比較 (0.8 = 4/5, 0.6 = 3/5, 0.4 = 2/5, 0.2 = 1/5)
                 let difficultyLabel = "中等";
-                if (difficulty >= 0.8) difficultyLabel = "很容易";
-                else if (difficulty >= 0.6) difficultyLabel = "容易";
-                else if (difficulty >= 0.4) difficultyLabel = "中等";
-                else if (difficulty >= 0.2) difficultyLabel = "困難";
+                if (correctCount * 5 >= 4 * N) difficultyLabel = "很容易";
+                else if (correctCount * 5 >= 3 * N) difficultyLabel = "容易";
+                else if (correctCount * 5 >= 2 * N) difficultyLabel = "中等";
+                else if (correctCount * 5 >= 1 * N) difficultyLabel = "困難";
                 else difficultyLabel = "很困難";
 
-                let discriminationLabel = "很好";
-                if (discrimination >= 0.4) discriminationLabel = "很好";
-                else if (discrimination >= 0.3) discriminationLabel = "好";
-                else if (discrimination >= 0.2) discriminationLabel = "可接受";
-                else if (discrimination >= 0.1) discriminationLabel = "需改進";
-                else discriminationLabel = "很差";
+                if (insufficientSample) {
+                    results.push({
+                        id: pIds[j],
+                        correctCount,
+                        difficulty: difficulty.toFixed(3),
+                        discrimination: null,
+                        discriminationValue: null,
+                        discriminationStatus: "insufficient_sample",
+                        difficultyLabel,
+                        discriminationLabel: "無法計算 (樣本過小，N < 2)",
+                        groupSize,
+                        highCutoff,
+                        lowCutoff,
+                        tieAdjusted: false,
+                        sharedCutoff: false
+                    });
+                } else if (noScoreVariance) {
+                    results.push({
+                        id: pIds[j],
+                        correctCount,
+                        difficulty: difficulty.toFixed(3),
+                        discrimination: null,
+                        discriminationValue: null,
+                        discriminationStatus: "no_score_variance",
+                        difficultyLabel,
+                        discriminationLabel: "無法計算 (全體總分相同，無高低分組差異)",
+                        groupSize,
+                        highCutoff,
+                        lowCutoff,
+                        tieAdjusted: false,
+                        sharedCutoff: false
+                    });
+                } else {
+                    // 依總分群進行整數計數 (整數加法具備完全交換律，不受任何學生列序影響)
+                    let cAbove = 0;
+                    let cTieH = 0;
+                    let cBelow = 0;
+                    let cTieL = 0;
+                    for (let i = 0; i < N; i++) {
+                        const ans = rawData[i][j];
+                        if (ans === 0) continue;
+                        const s = studentScores[i];
+                        if (s > highCutoff) cAbove++;
+                        else if (s === highCutoff) cTieH++;
+                        if (s < lowCutoff) cBelow++;
+                        else if (s === lowCutoff) cTieL++;
+                    }
 
-                results.push({
-                    id: pIds[j],
-                    correctCount,
-                    difficulty: difficulty.toFixed(3),
-                    discrimination: discrimination.toFixed(3),
-                    difficultyLabel,
-                    discriminationLabel
-                });
+                    // 有理數精確分子與分母：
+                    // HighRate = (cAbove * tiedHighCount + cTieH * remHigh) / (groupSize * tiedHighCount)
+                    // LowRate  = (cBelow * tiedLowCount  + cTieL * remLow)  / (groupSize * tiedLowCount)
+                    const highNum = cAbove * tiedHighCount + cTieH * remHigh;
+                    const lowNum = cBelow * tiedLowCount + cTieL * remLow;
+                    const discNum = highNum * tiedLowCount - lowNum * tiedHighCount;
+                    const discDen = groupSize * tiedHighCount * tiedLowCount;
+                    const discrimination = discNum / discDen;
+
+                    // 以 BigInt 整數交叉相乘精確判定 0.4, 0.3, 0.2, 0.1 門檻 (無浮點誤差且不抹除 0.2999 等真實小於門檻之差異)
+                    const bNum10 = BigInt(discNum) * 10n;
+                    const bDen = BigInt(discDen);
+                    let discriminationLabel = "很差";
+                    if (bNum10 >= 4n * bDen) discriminationLabel = "很好";
+                    else if (bNum10 >= 3n * bDen) discriminationLabel = "好";
+                    else if (bNum10 >= 2n * bDen) discriminationLabel = "可接受";
+                    else if (bNum10 >= 1n * bDen) discriminationLabel = "需改進";
+                    else discriminationLabel = "很差";
+
+                    results.push({
+                        id: pIds[j],
+                        correctCount,
+                        difficulty: difficulty.toFixed(3),
+                        discrimination: discrimination.toFixed(3),
+                        discriminationValue: discrimination,
+                        discriminationStatus: tieAdjusted ? "tie_weighted" : "ok",
+                        difficultyLabel,
+                        discriminationLabel,
+                        groupSize,
+                        highCutoff,
+                        lowCutoff,
+                        tieAdjusted,
+                        sharedCutoff
+                    });
+                }
             }
             return results;
         }
@@ -1222,28 +1978,44 @@
 
         function performSPAnalysis() {
             const dataInput = document.getElementById('dataInput').value;
-            const resultsDiv = document.getElementById('results');
             const errorMessagesDiv = document.getElementById('errorMessages');
             errorMessagesDiv.style.display = 'none';
 
             try {
+                const seedVal = parseInt(document.getElementById('mcSeedInput').value, 10);
+                const runsVal = parseInt(document.getElementById('mcRunsSelect').value, 10) || 1000;
+                const simOptions = {
+                    seed: Number.isNaN(seedVal) ? 20261028 : seedVal,
+                    runs: runsVal
+                };
+
                 if (dataInput.trim() !== '') {
-                    const rawData = parseInputStrict(dataInput);
-                    lastCoreResult = computeSPCore(rawData);
+                    const parsedText = parseInputStrict(dataInput, {
+                        hasHeaderRow: document.getElementById('textHasHeaderRow').checked,
+                        hasStudentCol: document.getElementById('textHasStudentCol').checked,
+                        returnPayload: true
+                    });
+                    lastCoreResult = computeSPCore(
+                        parsedText.matrix,
+                        parsedText.studentIds,
+                        parsedText.itemIds,
+                        simOptions
+                    );
                 } else if (currentExcelPayload && currentExcelPayload.matrix.length > 0) {
                     lastCoreResult = computeSPCore(
                         currentExcelPayload.matrix,
                         currentExcelPayload.studentIds,
-                        currentExcelPayload.itemIds
+                        currentExcelPayload.itemIds,
+                        simOptions
                     );
                 } else {
-                    throw new Error("請先輸入作答數據或上傳 Excel 檔案。");
+                    throw new Error("請先輸入作答數據或上傳有效的 Excel 檔案。");
                 }
 
                 renderAllResults(lastCoreResult);
-                resultsDiv.style.display = 'block';
+                document.getElementById('results').style.display = 'block';
             } catch (error) {
-                resultsDiv.style.display = 'none';
+                invalidateAnalysisResults();
                 errorMessagesDiv.textContent = `錯誤：${error.message}`;
                 errorMessagesDiv.style.display = 'block';
             }
@@ -1263,27 +2035,37 @@
             document.getElementById('curveAreaCells').textContent = `${res.curveAreaCells} 格`;
             document.getElementById('curveAreaRatio').textContent = `佔總格數 ${(res.curveAreaRatio * 100).toFixed(1)}% (偶整數對稱差面積)`;
 
-            // 渲染蒙地卡羅差異係數 D*sim 卡片
+            // 渲染獨立 Bernoulli 蒙地卡羅差異比值 D*sim 卡片 (明確標示模擬平均面積與 MCSE，不使用易誤解為信賴區間之 ± 符號)
             const dstarEl = document.getElementById('summaryDstarSim');
             const dstarSubEl = document.getElementById('summaryDstarSimSub');
 
             if (res.dStarSim !== null) {
-                const dVal = parseFloat(res.dStarSim);
+                const dVal = Number(res.dStarSim);
                 dstarEl.textContent = dVal.toFixed(3);
+                const mcInfo = `模擬平均面積 = ${Number(res.simMeanC).toFixed(2)} 格；MCSE = ${Number(res.simSEC || 0).toFixed(2)} 格 (Seed=${res.simSeed}, R=${res.simRuns})`;
 
                 if (dVal <= 0.35) {
                     dstarEl.style.color = "var(--nordic-spruce)";
-                    dstarSubEl.innerHTML = `階層結構極佳 (隨機基準 E(C) ≈ ${res.simMeanC} 格)`;
+                    dstarSubEl.innerHTML = `${mcInfo}<br>工具暫定提示：模擬比值 ≤ 0.35 (曲線差異小於隨機基準)`;
                 } else if (dVal <= 0.6) {
                     dstarEl.style.color = "var(--nordic-slate)";
-                    dstarSubEl.innerHTML = `符合預期模式 (隨機基準 E(C) ≈ ${res.simMeanC} 格)`;
+                    dstarSubEl.innerHTML = `${mcInfo}<br>工具暫定提示：模擬比值 0.35–0.60 (中等曲線差異)`;
                 } else {
                     dstarEl.style.color = "var(--terracotta-red)";
-                    dstarSubEl.innerHTML = `偏離預期組型 (隨機基準 E(C) ≈ ${res.simMeanC} 格)`;
+                    dstarSubEl.innerHTML = `${mcInfo}<br>工具暫定提示：模擬比值 &gt; 0.60 (曲線分離度較高，請檢視 CS/CP)`;
                 }
             } else {
                 dstarEl.textContent = "無法計算";
-                dstarSubEl.textContent = "平均答對率為 0 或 1 (缺乏隨機變異)";
+                dstarEl.style.color = "var(--text-muted)";
+                if (res.DstarStatus === "degenerate_dimension") {
+                    dstarSubEl.textContent = "單列或單欄退化矩陣 (排序後 S 與 P 曲線必然重疊，面積恆為 0)";
+                } else if (res.DstarStatus === "extreme_p") {
+                    dstarSubEl.textContent = "全體平均答對率為 0 或 1 (無隨機變異)";
+                } else if (res.DstarStatus === "zero_simulated_mean") {
+                    dstarSubEl.textContent = "有限次模擬之平均面積分母為 0";
+                } else {
+                    dstarSubEl.textContent = "目前資料無法計算隨機基準比值";
+                }
             }
 
             document.getElementById('itemTableVersionTitle').textContent = isSato
@@ -1300,11 +2082,11 @@
 
             const spTableHeader = document.querySelector('#spTable thead');
             const spTableBody = document.querySelector('#spTable tbody');
-            spTableHeader.innerHTML = '';
-            spTableBody.innerHTML = '';
+            spTableHeader.textContent = '';
+            spTableBody.textContent = '';
 
             const headerRow = spTableHeader.insertRow();
-            headerRow.insertCell().textContent = '學生 \ 題目';
+            headerRow.insertCell().textContent = '學生 \\ 題目';
             res.sortedItems.forEach(item => {
                 headerRow.insertCell().textContent = item.id;
             });
@@ -1324,14 +2106,12 @@
 
                     const c_j = res.sortedColTotals[j];
 
-                    // S 曲線垂直邊界 (含 r_i=0 畫在第一題左邊界)
                     if (r_i === 0 && j === 0) {
                         cell.classList.add('sp-boundary-s-left');
                     } else if (r_i > 0 && j === r_i - 1) {
                         cell.classList.add('sp-boundary-s-right');
                     }
 
-                    // S 曲線水平轉折線
                     if (i < res.N - 1) {
                         const next_r = res.sortedRowTotals[i + 1];
                         if (j >= next_r && j < r_i) {
@@ -1339,14 +2119,12 @@
                         }
                     }
 
-                    // P 曲線水平邊界 (含 c_j=0 畫在第一列上邊界)
                     if (c_j === 0 && i === 0) {
                         cell.classList.add('sp-boundary-p-top');
                     } else if (c_j > 0 && i === c_j - 1) {
                         cell.classList.add('sp-boundary-p-bottom');
                     }
 
-                    // P 曲線垂直轉折線
                     if (j < res.J - 1) {
                         const next_c = res.sortedColTotals[j + 1];
                         if (i >= next_c && i < c_j) {
@@ -1381,7 +2159,7 @@
 
             // 渲染試題注意係數表
             const itemCautionBody = document.querySelector('#itemCautionTable tbody');
-            itemCautionBody.innerHTML = '';
+            itemCautionBody.textContent = '';
             res.sortedItems.forEach((item, rankIdx) => {
                 const row = itemCautionBody.insertRow();
                 row.insertCell().textContent = `#${rankIdx + 1}`;
@@ -1406,7 +2184,11 @@
                     activeCell.textContent = formatCautionStatus(activeStatus);
                     activeCell.style.backgroundColor = "#e2ddd5";
                     activeCell.style.color = "var(--text-secondary)";
-                    diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${activeStatus === 'extreme_score' ? '全體答對或全體答錯' : '學生總分無變異，分母為零'}）</strong><span class="diag-sub">此題無組型變異可供比較，請依整體教學目標評估是否保留作為基本題或挑戰題。</span>`;
+                    if (activeStatus === 'extreme_score') {
+                        diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（全體答對或全體答錯，分母為零）</strong><span class="diag-sub">此題無組型變異可供比較，請依整體教學目標評估是否保留作為基本題或挑戰題。</span>`;
+                    } else {
+                        diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（全體學生總分相同，總分排序缺乏區辨資訊，分母為零）</strong><span class="diag-sub">雖單題可能有對錯差異，但因全體學生總分無變異，無法評估高分與低分群之作答階層差異。</span>`;
+                    }
                 } else {
                     activeCell.textContent = activeVal.toFixed(3);
                     if (activeVal >= severeThreshold) {
@@ -1424,20 +2206,20 @@
 
                     const ratePct = item.rate * 100;
                     if (activeVal < warnThreshold && ratePct > 50) {
-                        diagCell.innerHTML = `🟢 <strong>試題品質優良（適合區分低成就與一般學生）</strong><span class="diag-sub">作答組型與全體學生能力排序一致，試題穩定度佳。</span>`;
+                        diagCell.innerHTML = `🟢 <strong>較易題且作答組型與本樣本總分排序吻合</strong><span class="diag-sub">高分群多數答對此題，階層一致性佳（試題實際鑑別力仍請結合下方 D 值與內容效度綜合判斷）。</span>`;
                     } else if (activeVal >= warnThreshold && ratePct > 50) {
-                        diagCell.innerHTML = `🟡 <strong>建議局部檢視或編修試題（作答組型較不一致）</strong><span class="diag-sub">部分高分學生答錯此較易試題，可能含有誘答力過強之干擾選項、題意略欠明確或涉及異質概念。</span>`;
+                        diagCell.innerHTML = `🟡 <strong>較易題但作答組型偏離樣本總分排序（建議檢視題意或誘答選項）</strong><span class="diag-sub">部分高分學生答錯而低分學生答對，可能含有誘答力過強之干擾選項、題意略欠明確或涉及不同單元經驗。</span>`;
                     } else if (activeVal < warnThreshold && ratePct <= 50) {
-                        diagCell.innerHTML = `🔵 <strong>優質進階難題（適合區分高成就學生）</strong><span class="diag-sub">雖答對率較低，但主要由高分群學生答對，階層鑑別效果良好。</span>`;
+                        diagCell.innerHTML = `🔵 <strong>較難題且作答組型與本樣本總分排序吻合</strong><span class="diag-sub">答對者主要集中於高分群，符合難度階層（試題實際區辨力仍請結合下方 D 值與樣本規模綜合判斷）。</span>`;
                     } else {
-                        diagCell.innerHTML = `🔴 <strong>建議重新檢視試題內容或計分鍵（作答組型明顯偏離預期）</strong><span class="diag-sub">答對率低且高分群答錯、低分群反而答對，可能存在題意歧義、超出教學範圍、多向度內容或標準答案設定問題。</span>`;
+                        diagCell.innerHTML = `🔴 <strong>較難題且作答組型明顯偏離樣本總分排序（建議檢視試題內容或計分鍵）</strong><span class="diag-sub">答對率低且高分群答錯、低分群反而答對，可能存在題意歧義、超出教學範圍、多向度內容或標準答案設定問題。</span>`;
                     }
                 }
             });
 
             // 渲染學生注意係數表
             const studentCautionBody = document.querySelector('#studentCautionTable tbody');
-            studentCautionBody.innerHTML = '';
+            studentCautionBody.textContent = '';
             res.sortedStudents.forEach((st, rankIdx) => {
                 const row = studentCautionBody.insertRow();
                 row.insertCell().textContent = `#${rankIdx + 1}`;
@@ -1463,7 +2245,7 @@
                     activeCell.style.backgroundColor = "#e2ddd5";
                     activeCell.style.color = "var(--text-secondary)";
                     const extremeNote = st.score === res.J ? "全對（滿分）" : (st.score === 0 ? "全錯（零分）" : "試題難度無變異");
-                    diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${extremeNote}，分母為零）</strong><span class="diag-sub">缺乏組型變異可供比較，請直接參照得分百分比評估該生學習表現。</span>`;
+                    diagCell.innerHTML = `⚪ <strong>目前資料無法計算此指標（${extremeNote}，分母為零）</strong><span class="diag-sub">缺乏組型變異可供比較，請直接參照得分百分比評估該生本次表現。</span>`;
                 } else {
                     activeCell.textContent = activeVal.toFixed(3);
                     if (activeVal >= severeThreshold) {
@@ -1481,30 +2263,56 @@
 
                     const scorePct = st.rate * 100;
                     if (scorePct > 75 && activeVal < warnThreshold) {
-                        diagCell.innerHTML = `🟢 <strong>學習表現良好、穩定性高</strong><span class="diag-sub">作答組型與本次樣本整體難易排序一致，基礎與進階概念掌握理想。</span>`;
+                        diagCell.innerHTML = `🟢 <strong>本次得分高，且作答組型與樣本難易排序吻合</strong><span class="diag-sub">依本卷難易度階層順利作答，無明顯異常失誤組型。</span>`;
                     } else if (scorePct > 75 && activeVal >= warnThreshold) {
-                        diagCell.innerHTML = `🟡 <strong>整體表現佳，但可能偶有粗心失誤或特定基礎概念疏漏</strong><span class="diag-sub">作答組型與整體難易排序較不一致（答對難題卻答錯簡單題），建議結合錯題內容與解題歷程查核。</span>`;
+                        diagCell.innerHTML = `🟡 <strong>本次得分高，但作答組型偏離樣本難易排序</strong><span class="diag-sub">答對難題卻答錯部分較易題，可能源於粗心失誤、題意誤讀或特定基礎概念疏漏，建議結合解題歷程查核。</span>`;
                     } else if (scorePct >= 50 && scorePct <= 75 && activeVal < warnThreshold) {
-                        diagCell.innerHTML = `🔵 <strong>學習表現尚穩定，可持續精進進階概念</strong><span class="diag-sub">作答組型符合試題難易階層，建議針對尚未掌握之中高難度單元加強輔導。</span>`;
+                        diagCell.innerHTML = `🔵 <strong>本次得分中等，且作答組型符合樣本難易階層</strong><span class="diag-sub">較易試題大致掌握，建議針對尚未得分之中高難度單元加強輔導。</span>`;
                     } else if (scorePct >= 50 && scorePct <= 75 && activeVal >= warnThreshold) {
-                        diagCell.innerHTML = `🟠 <strong>準備可能尚欠全面，或偶有粗心與概念混淆情形</strong><span class="diag-sub">作答組型與樣本難易排序較不一致，建議檢視簡單錯題以釐清特定迷思概念。</span>`;
+                        diagCell.innerHTML = `🟠 <strong>本次得分中等，惟作答組型與樣本難易排序較不一致</strong><span class="diag-sub">可能特定單元準備尚欠全面、概念混淆或偶有粗心與猜測，建議檢視簡單錯題以釐清迷思概念。</span>`;
                     } else if (scorePct < 50 && activeVal < warnThreshold) {
-                        diagCell.innerHTML = `🟣 <strong>基礎學力可能尚待充實，建議加強系統性補救教學</strong><span class="diag-sub">作答組型符合難易排序惟整體得分偏低，建議由基礎核心概念循序輔導。</span>`;
+                        diagCell.innerHTML = `🟣 <strong>作答組型符合樣本難易階層，惟本次整體得分偏低</strong><span class="diag-sub">主要答對最基礎試題，建議由核心基礎概念循序進行補救教學。</span>`;
                     } else {
-                        diagCell.innerHTML = `🔴 <strong>學習表現較不穩定，可能對內容缺乏充分準備或有隨機猜測傾向</strong><span class="diag-sub">得分偏低且作答組型與難易排序明顯不一致，建議深入了解其解題歷程與學習困難。</span>`;
+                        diagCell.innerHTML = `🔴 <strong>本次得分偏低，且作答組型明顯偏離樣本難易排序</strong><span class="diag-sub">答錯簡單題卻答對少數難題，可能學習基礎較不平均、受試題多向度影響或有隨機猜測傾向，建議深入了解解題歷程。</span>`;
                     }
                 }
             });
 
             // 渲染古典測驗理論試題分析表
             const itemAnalysisBody = document.querySelector('#itemAnalysisTable tbody');
-            itemAnalysisBody.innerHTML = '';
+            itemAnalysisBody.textContent = '';
+            const firstItem = res.itemAnalysis[0];
+            const gSize = firstItem?.groupSize || Math.max(1, Math.floor(res.N * 0.27));
+            const anyTieWeighted = res.itemAnalysis.some(it => it.tieAdjusted);
+            const anySharedCutoff = res.itemAnalysis.some(it => it.sharedCutoff);
+
+            let cttNoteHtml = `高低分組各取前、後 27%（本樣本每組有效權重 <code>g = ${gSize}</code>`;
+            if (firstItem && firstItem.highCutoff !== undefined && firstItem.discrimination !== null) {
+                cttNoteHtml += `；高分組切點總分 <code>≥ ${firstItem.highCutoff}</code>、低分組切點總分 <code>≤ ${firstItem.lowCutoff}</code>`;
+            }
+            cttNoteHtml += `）`;
+            if (anyTieWeighted) {
+                cttNoteHtml += `；<strong>27% 切點存在同分群，已啟用「總分群整數計數與邊界同分期望值加權法」消除學生列序影響</strong>`;
+            }
+            if (anySharedCutoff) {
+                cttNoteHtml += `（註：本樣本高低切點落在同一同分群 <code>${firstItem.highCutoff}</code> 分，同分者在高低組各具部分期望權重，所得 D 等同於所有合法互不重疊分組之期望值）`;
+            }
+            cttNoteHtml += `。`;
+            document.getElementById('cttSummaryNote').innerHTML = cttNoteHtml;
+
             res.itemAnalysis.forEach(item => {
                 const row = itemAnalysisBody.insertRow();
                 row.insertCell().textContent = item.id;
                 row.insertCell().textContent = `${item.correctCount} / ${res.N}`;
                 row.insertCell().textContent = item.difficulty;
-                row.insertCell().textContent = item.discrimination;
+
+                const discValCell = row.insertCell();
+                if (item.discrimination === null) {
+                    discValCell.textContent = "無法計算";
+                    discValCell.style.color = "var(--text-muted)";
+                } else {
+                    discValCell.textContent = item.discrimination;
+                }
 
                 const diffCell = row.insertCell();
                 diffCell.textContent = item.difficultyLabel;
@@ -1516,9 +2324,16 @@
                 const discCell = row.insertCell();
                 discCell.textContent = item.discriminationLabel;
                 discCell.style.fontWeight = "bold";
-                if (item.discriminationLabel === "很好" || item.discriminationLabel === "好") discCell.style.color = "var(--nordic-spruce)";
-                else if (item.discriminationLabel === "可接受") discCell.style.color = "#d97706";
-                else discCell.style.color = "var(--terracotta-red)";
+                if (item.discrimination === null) {
+                    discCell.style.color = "var(--text-secondary)";
+                    discCell.style.fontWeight = "normal";
+                } else if (item.discriminationLabel === "很好" || item.discriminationLabel === "好") {
+                    discCell.style.color = "var(--nordic-spruce)";
+                } else if (item.discriminationLabel === "可接受") {
+                    discCell.style.color = "#d97706";
+                } else {
+                    discCell.style.color = "var(--terracotta-red)";
+                }
             });
         }
     </script>
