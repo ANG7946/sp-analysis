@@ -36,7 +36,7 @@
 
 - **D*sim 的性質**：D*sim 是描述性的標準化比值，不是統計顯著性檢定（沒有 p 值），也不是 KR-20、Cronbach's α 等信度或內部一致性係數；在特定交錯組型下數值可能大於 1。MCSE 只反映有限次模擬的數值估計誤差，不是 95% 信賴區間，也不代表受試者抽樣的不確定性。
 - **D*sim 的分界**：畫面上的 0.35／0.60 分界僅借鏡傳統 D* 文獻慣例，屬工具暫定的觀察提示；目前尚未建立此模擬分母與傳統佐藤（1975）D* 基準（或 D_B(M) 查表近似式）的理論等價性。正式研究宜報告面積 C、模擬模型參數（p̄、種子、R）與精度（MCSE）。
-- **注意係數門檻**：原始係數採傳統教學測驗慣例（0.5 留意檢視、0.75 偏離明顯）；修正係數採文獻常見的 0.3 為提醒門檻（例如 McArthur & Hafner, 1982, ERIC ED224841），並以 0.5 作為本工具自訂的高偏離提示。這些界值皆為實務篩檢的經驗提示，不是統計臨界值。CP* 與 CP 的比值隨各題答對人數與學生總分分布而改變，兩者之間沒有固定的換算關係。
+- **注意係數門檻**：原始係數採傳統教學測驗慣例（0.5 留意檢視、0.75 偏離明顯）；修正係數採文獻常見的 0.3 為提醒門檻，並以 0.5 作為本工具自訂的高偏離提示。這些界值皆為實務篩檢的經驗提示，不是統計臨界值。CP* 與 CP 的比值隨各題答對人數與學生總分分布而改變，兩者之間沒有固定的換算關係。
 - **解讀界限**：低注意係數只代表作答符合本樣本的難易排序，不能單獨保證高鑑別度或高測驗資訊量。學生注意係數反映本次作答偏離樣本難易排序的程度，不是心理注意力的測量；高係數可能涉及題意誤讀、單元熟悉度差異、試題多向度、粗心或猜測等多種待查假設，不應直接視為心理特質的定論。
 - **難度與鑑別度的分類**：難度依答對比例以 0.8、0.6、0.4、0.2 為界，分為很容易、容易、中等、困難、很困難；鑑別度以 0.4、0.3、0.2、0.1 為界，分為很好、好、可接受、需改進、很差。樣本少於 2 人或全體總分相同時，鑑別度標示為無法計算。
 
@@ -63,13 +63,14 @@ LICENSE       本工具授權（MIT License）
 
 | 函式庫 | 版本 | 載入方式 | 授權 |
 |---|---|---|---|
-| SheetJS（xlsx） | 0.18.5 | 由 cdnjs 載入 | Apache License 2.0 |
+| SheetJS Community Edition（xlsx） | 0.18.5 | 執行時由 cdnjs 載入，本 repository 未包含其程式碼 | Apache License 2.0（https://sheetjs.com/） |
 
 ## 參考文獻
 
-> 以下依工具畫面所列整理；完整書目（作者全名、出處、卷期頁碼）尚待補齊。
+Harnisch, D. L., & Linn, R. L. (1981). Analysis of item response patterns: Questionable test data and dissimilar curriculum practices. *Journal of Educational Measurement, 18*(3), 133–146. https://doi.org/10.1111/j.1745-3984.1981.tb00848.x
 
-- Harnisch & Linn (1981). *Analysis of item response patterns*.
-- McArthur & Hafner (1982). ERIC ED224841.
-- Miller & Burstein (1981). *Evaluation design project: Multilevel interpretation of evaluation data study*. ERIC ED212649. https://files.eric.ed.gov/fulltext/ED212649.pdf
-- 佐藤（Sato, 1975）。*S-P 表の作成と解釈*。
+Miller & Burstein (1981). *Evaluation design project: Multilevel interpretation of evaluation data study*. ERIC ED212649. https://files.eric.ed.gov/fulltext/ED212649.pdf
+
+佐藤（Sato, 1975）。*S-P 表の作成と解釈*。
+
+> Miller 與 Burstein（1981）及佐藤（1975）的完整書目（作者全名、出版資訊）尚待補齊。
